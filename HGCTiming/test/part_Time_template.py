@@ -25,7 +25,7 @@ process.source = cms.Source("PoolSource",
                             )
         
 
-from HGCalCalibration.HitValidation.timeRecHitEstimator_cfi import HGCalTimeEstimator
+from HGCTimingAnalysis.HGCTiming.timeRecHitEstimator_cfi import HGCalTimeEstimator
 
 process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              detector = cms.string("all"),
