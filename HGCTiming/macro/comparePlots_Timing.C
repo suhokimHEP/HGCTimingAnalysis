@@ -66,11 +66,11 @@ void comparePlots_Timing(){
   //float binWidth = 0.5;
   float binStart = 1.65;
 
-  //std::string pdgID = "130";
+  std::string pdgID = "130";
   //std::string pdgID = "211";
-  std::string pdgID = "22";
+  //  std::string pdgID = "22";
 
-  int rad1 = 1;
+  int rad1 = 0;
 
   int nFiles = 7;
   std::vector<std::string> nameFiles;
@@ -91,10 +91,18 @@ void comparePlots_Timing(){
   }
 
 
-  int nOptions = 2;
+  int nOptions = 4;
   std::vector<std::string> nameOptions;
-  nameOptions.push_back("CSF20LBA20");
-  nameOptions.push_back("CSF20LEA20");
+  // nameOptions.push_back("CSF20LBA50");
+  // nameOptions.push_back("CSF20LEA50");
+
+   nameOptions.push_back("CSF20LBA40");
+   nameOptions.push_back("CSF20LEA40");
+   nameOptions.push_back("CSF30LBA40");
+   nameOptions.push_back("CSF30LEA40");
+
+  // nameOptions.push_back("CSF30LBA20");   
+  // nameOptions.push_back("CSF30LEA20");   
 
 
   TH1F* hDummy[7];
@@ -160,7 +168,7 @@ void comparePlots_Timing(){
   TFile* inF[8][7];
   for(int iR=0; iR<nOptions; ++iR){
     for(int ij=0; ij<nFiles; ++ij){
-      std::string inFileName =  "../../test/timingStudies/"+nameOptions.at(iR)+"/JOB_"+nameFiles.at(ij)+"_3fC/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_3fC.root";
+      std::string inFileName =  "../test/"+nameOptions.at(iR)+"/JOB_"+nameFiles.at(ij)+"_3fC/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_3fC.root";
       
 
       // if(nameOptions.at(iR) == "CSF30LE" && ij == 6 && pdgID == "130") 
@@ -207,46 +215,51 @@ void comparePlots_Timing(){
 	  std::cout << " iF = " << iF  << " ieta = " << ieta << " irad = " << iRad << std::endl;
 	  if((rad1 == 0  && iRad < 1) || (rad1 == 1 && iRad == 1)){
 	if(doAllTheFits == true){
-	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.1f-%.1f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.1f-%.1f_dRadius%d_AvgArm", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
 	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  if(hAverageTime_Eta_dRadius->GetEntries() < 100) 	  hAverageTime_Eta_dRadius->Rebin(10);
-	  else	  hAverageTime_Eta_dRadius->Rebin(5);
-	  //	  tgRMS[iF][iRad]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hAverageTime_Eta_dRadius->GetRMS());
-	  //tgMean[iF][iRad]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.), hAverageTime_Eta_dRadius->GetMean());
+	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  // if(hAverageTime_Eta_dRadius->GetEntries() < 100) 	  hAverageTime_Eta_dRadius->Rebin(10);
+	  hAverageTime_Eta_dRadius->Rebin(5);
 
 	  if(hAverageTime_Eta_dRadius->GetRMS() < 0.01){
 	    tg[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hAverageTime_Eta_dRadius->GetRMS());
 	    tgM[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.), hAverageTime_Eta_dRadius->GetMean());
 	  }
-	  else{	  
-	    if(pdgID == "130" && iF == nFiles-1 && ieta == 2 && iRad == 0){
-	      hfithisto2->SetRange(-0.05, 0.05);
-	      hfithisto2->SetParameters(44, 0.03, 0.01);
+	  else{	
+	    
+	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 0){
+	      hfithisto2->SetRange(-0.02, 0.02);
+	      hfithisto2->SetParameters(80, 0.001, 0.003);
 	    }
-	    if(pdgID == "130" && iF == nFiles-1 && ieta == 2 && iRad == 1){
+	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 1){
 	      hfithisto2->SetRange(-0.05, 0.05);
-	      hfithisto2->SetParameters(44, 0.03, 0.01);
+	      hfithisto2->SetParameters(30, 0.01, 0.007);
 	    }
-	    // if(pdgID == "130" && iF == nFiles-1 && ieta == nBinsEta-1 && iRad == 0){
-	    //   hfithisto2->SetRange(-0.2, 0.2);
-	    //   hfithisto2->SetParameters(32, 0.02, 0.01);
-	    // }
-	    // if(pdgID == "130" && iF == nFiles-1 && ieta == nBinsEta-1 && iRad == 0){
-	    //   hfithisto2->SetRange(-0.2, 0.2);
-	    //   hfithisto2->SetParameters(32, 0.02, 0.01);
-	    // }    
+	    else if(pdgID == "130" && iF == nFiles-1 && ieta == 5 && iRad == 0){
+	      hfithisto2->SetRange(-0.02, 0.02);
+	      hfithisto2->SetParameters(80, 0.001, 0.003);
+	    }
+	    else if(pdgID == "130" && iF == nFiles-1 && ieta == 5 && iRad == 1){
+	      hfithisto2->SetRange(-0.05, 0.05);
+	      hfithisto2->SetParameters(28, 0.01, 0.007);
+	    }
 	    else{
+	      /*
 	      float YMax = 0.;
 	      float xMaxVal = getXmax(hAverageTime_Eta_dRadius, YMax);
 	      hfithisto->SetRange(xMaxVal - 2.*hAverageTime_Eta_dRadius->GetRMS(), xMaxVal + 2.*hAverageTime_Eta_dRadius->GetRMS());
 	      hfithisto->SetParameter(1, xMaxVal);
 	      hfithisto->SetParameter(2, hAverageTime_Eta_dRadius->GetRMS());
-	      
-	      hAverageTime_Eta_dRadius->Fit("hfithisto", "RQ");
-	      hfithisto2->SetRange(xMaxVal - 2.*hfithisto->GetParameter(2), xMaxVal + 2.*hfithisto->GetParameter(2));
-	      hfithisto2->SetParameters(YMax, hfithisto->GetParameter(1), hfithisto->GetParameter(2));
+	      */
+
+	    hfithisto->SetRange(hAverageTime_Eta_dRadius->GetMean() - 2.*hAverageTime_Eta_dRadius->GetRMS(), hAverageTime_Eta_dRadius->GetMean() + 2.*hAverageTime_Eta_dRadius->GetRMS());
+	    hfithisto->SetParameter(1, hAverageTime_Eta_dRadius->GetMean());
+	    hfithisto->SetParameter(2, hAverageTime_Eta_dRadius->GetRMS());
+	      	      
+	    hAverageTime_Eta_dRadius->Fit("hfithisto", "RQ");
+	    hfithisto2->SetRange(hfithisto->GetParameter(1) - 2.*hfithisto->GetParameter(2), hfithisto->GetParameter(1) + 2.*hfithisto->GetParameter(2));
+	    hfithisto2->SetParameters(hfithisto->GetParameter(0), hfithisto->GetParameter(1), hfithisto->GetParameter(2));
+
 	    }
 
 	    hAverageTime_Eta_dRadius->Fit("hfithisto2", "RQ");  
@@ -394,6 +407,35 @@ void comparePlots_Timing(){
   ch_Rcut->Print((folder+"/h_timeResoVsEtaCut_pdg"+pdgID+".png").c_str(), "png");
   ch_Rcut->Print((folder+"/h_timeResoVsEtaCut_pdg"+pdgID+".pdf").c_str(), "pdf");  
   ch_Rcut->Print((folder+"/h_timeResoVsEtaCut_pdg"+pdgID+".root").c_str(), "root");
+  }
+
+  TCanvas* ch_Rcut2 = new TCanvas();
+  ch_Rcut2->cd();
+  tg[0][2]->GetXaxis()->SetTitle("#eta");
+  tg[0][2]->GetYaxis()->SetTitle("#sigma ns");
+  tg[0][2]->GetYaxis()->SetRangeUser(0., 0.1);
+  if(pdgID == "22") tg[0][2]->GetYaxis()->SetRangeUser(0., 0.05);
+  tg[0][2]->Draw("apl");
+  for(int iF=3; iF<nFiles; ++iF){
+    tg[0][iF]->Draw("pl, same");
+  } 
+  for(int iT=1; iT<nOptions; ++iT){
+    tg[iT][2]->Draw("pl, same");
+    for(int iF=3; iF<nFiles; ++iF){
+      tg[iT][iF]->Draw("pl, same");
+    } 
+  }
+  legTGM->Draw("same");
+  legTGMOpt->Draw("same");
+  if(rad1 == 1){
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+"_rad1.png").c_str(), "png");
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+"_rad1.pdf").c_str(), "pdf");  
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+"_rad1.root").c_str(), "root");
+  }
+  else{
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+".png").c_str(), "png");
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+".pdf").c_str(), "pdf");  
+  ch_Rcut2->Print((folder+"/h_timeResoVsEtaCut2_pdg"+pdgID+".root").c_str(), "root");
   }
 
   TCanvas* ch_FrEvt = new TCanvas();
