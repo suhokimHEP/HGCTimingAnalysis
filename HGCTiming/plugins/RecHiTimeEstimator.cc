@@ -117,6 +117,14 @@ RecHiTimeEstimator::RecHiTimeEstimator(const edm::ParameterSet& ps){
   SoN_for100 = fs->make<TH1F>("SoN_for100", "", 1000, 0., 1000.);
   SoN_for200 = fs->make<TH1F>("SoN_for200", "", 1000, 0., 1000.);
   SoN_for300 = fs->make<TH1F>("SoN_for300", "", 1000, 0., 1000.);
+
+  originalTime_100 = fs->make<TH1F>("originalTime_100", "", 1000, -2., 18.);
+  originalTime_200 = fs->make<TH1F>("originalTime_200", "", 1000, -2., 18.);
+  originalTime_300 = fs->make<TH1F>("originalTime_300", "", 1000, -2., 18.);
+
+  originalTime_vsMip_100 = fs->make<TH2F>("originalTime_vsMip_100", "", 500, 0., 500, 1000, -2., 18.);
+  originalTime_vsMip_200 = fs->make<TH2F>("originalTime_vsMip_200", "", 500, 0., 500, 1000, -2., 18.);
+  originalTime_vsMip_300 = fs->make<TH2F>("originalTime_vsMip_300", "", 500, 0., 500, 1000, -2., 18.);
 }
 
 
@@ -131,7 +139,7 @@ void RecHiTimeEstimator::setOptions(int cellType, float floor, int lifeAge, floa
     cellSize[1] = 0.5;
     cellSize[2] = 0.5;
   }
-  if(floor == 0.03) {
+  if(floor != 0.02) {
     floorValue = floor;
   }
   if(lifeAge == 1){
@@ -147,10 +155,7 @@ void RecHiTimeEstimator::setOptions(int cellType, float floor, int lifeAge, floa
     SoverNperMIP[1] = 1./(noisefC[1]/fCPerMIP[1]);
     SoverNperMIP[2] = 1./(noisefC[2]/fCPerMIP[2]);
   }
-  if(absTrend == 1.5){
-    absoluteTrend = absTrend;
-  }
-  if(absTrend == 2.){
+  if(absTrend != 1.){
     absoluteTrend = absTrend;
   }
 
@@ -256,9 +261,21 @@ void RecHiTimeEstimator::correctTime(const HGCRecHitCollection& rechits, HGCRecH
 
     float SoverN = energyMIP / sigmaNoiseMIP;
 
-    if(thick == 0) SoN_for100->Fill(SoverN);
-    if(thick == 1) SoN_for200->Fill(SoverN);
-    if(thick == 2) SoN_for300->Fill(SoverN);
+    if(thick == 0){
+      SoN_for100->Fill(SoverN);
+      originalTime_100->Fill(time);
+      originalTime_vsMip_100->Fill(energyMIP, time);
+    }
+    if(thick == 1){
+      SoN_for200->Fill(SoverN);
+      originalTime_200->Fill(time);
+      originalTime_vsMip_200->Fill(energyMIP, time);
+    }
+    if(thick == 2){
+      SoN_for300->Fill(SoverN);
+      originalTime_300->Fill(time);
+      originalTime_vsMip_300->Fill(energyMIP, time);
+    }
 
     if(energyMIP > 3. && SoverN > 10.){
       double smearedTime = getTimeHit(thick, SoverN);

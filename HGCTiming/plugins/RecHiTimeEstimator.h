@@ -84,6 +84,13 @@ private:
   TH1F* SoN_for200;
   TH1F* SoN_for300;
 
+  TH1F* originalTime_100;
+  TH1F* originalTime_200;
+  TH1F* originalTime_300;
+  TH2F* originalTime_vsMip_100;
+  TH2F* originalTime_vsMip_200;
+  TH2F* originalTime_vsMip_300;
+
   float fromTBtoHGC[3];
   float SoverNperMIP[3];
 
