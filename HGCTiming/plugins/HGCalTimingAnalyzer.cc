@@ -30,7 +30,7 @@
 #include "Geometry/CaloGeometry/interface/TruncatedPyramid.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 
-
+#include "TLorentzVector.h"
 #include "TRandom3.h"
 #include "TTree.h"
 #include "TH1F.h"
@@ -142,11 +142,13 @@ private:
   TH1F* h_rhGen_Radius_Eta[6];
   TH1F* h_rhGen_RadiusDdeta_Eta[6];
   TH1F* h_rhGen_RadiusPdeta_Eta[6];
-  TH1F* hAverageTime_Eta_dRadius[6][4];
-  TH1F* hAverageTime_Eta_dRadius_AvgArm[6][4];
-  TH1F* hAverageTime_Eta_dRadius_ResoWe[6][4];
-  TH1F* hAverageTime_Eta_dRadius_AvgCutH[6][2];
+  //  TH1F* hAverageTime_Eta_dRadius[6][4];
+  //  TH1F* hAverageTime_Eta_dRadius_AvgArm[6][4];
+  //  TH1F* hAverageTime_Eta_dRadius_ResoWe[6][4];
+  //TH1F* hAverageTime_Eta_dRadius_AvgCutH[6][2];
+  //  TH1F* hAverageTime_Eta_dRadius_AvgCutHCorr[6][2];
   TH1F* hAverageTime_Eta_dRadius_Avg68[6][2];
+  TH1F* hAverageTime_Eta_dRadius_Avg68Corr[6][2];
   TH1F* hEnergy_Eta_dRadius[6][4];
   TH1F* hTime_Eta_dRadius[6][4];
   TH1F* hTimeCut_Eta_dRadius[6][4];
@@ -360,12 +362,14 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
       hEnergy_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hEnergy_Eta_dRadius_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, 0., 1000.);
       hEnergyWithTime_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hEnergyWithTime_Eta_dRadius_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, 0., 1000.);
       hNumberHitsWithTime_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hNumberHitsWithTime_Eta_dRadius_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 2000, 0., 2000.);
-      hAverageTime_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1500, -0.5, 1.);
-      hAverageTime_Eta_dRadius_AvgArm[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgArm", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);
-      hAverageTime_Eta_dRadius_ResoWe[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1500, -0.5, 1.5);
+      //      hAverageTime_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1500, -0.5, 1.);
+      //      hAverageTime_Eta_dRadius_AvgArm[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgArm", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);
+      //      hAverageTime_Eta_dRadius_ResoWe[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1500, -0.5, 1.5);
       if(iRad < 2){
-      hAverageTime_Eta_dRadius_AvgCutH[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgCutH", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);      
+	//      hAverageTime_Eta_dRadius_AvgCutH[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgCutH", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);      
+      //      hAverageTime_Eta_dRadius_AvgCutHCorr[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgCutHCorr", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);      
       hAverageTime_Eta_dRadius_Avg68[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);
+      hAverageTime_Eta_dRadius_Avg68Corr[ieta][iRad] = fs->make<TH1F>(Form("hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68Corr", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1000, -0.2, 1.);
       }
 
       hFractionHitsWithTime_Eta_dRadius[ieta][iRad] = fs->make<TH1F>(Form("hFractionHits_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "", 1100, 0, 1.1);
@@ -678,8 +682,8 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     int totRHPerEtaRadius_AvgArm[6][4];
     float timePerEtaRadius_ResoWe[6][4];
     float totRHPerEtaRadius_ResoWe[6][4];
-    float timePerEtaRadiusAvgCutH[6][2];
-    int totRHPerEtaRadiusAvgCutH[6][2];
+    //    float timePerEtaRadiusAvgCutH[6][2];
+    //    int totRHPerEtaRadiusAvgCutH[6][2];
     float timePerEtaRadiusAvg68[6][2];
     int totRHPerEtaRadiusAvg68[6][2];
 
@@ -699,13 +703,13 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
 	totRHPerEtaRadius_allTime[iet][irad] = 0;
 	if(irad > 1) continue;
-	timePerEtaRadiusAvgCutH[iet][irad] = 0.;
+	//	timePerEtaRadiusAvgCutH[iet][irad] = 0.;
 	timePerEtaRadiusAvg68[iet][irad] = 0.;
-	totRHPerEtaRadiusAvgCutH[iet][irad] = 0;
+	//	totRHPerEtaRadiusAvgCutH[iet][irad] = 0;
 	totRHPerEtaRadiusAvg68[iet][irad] = 0;
       }
     }
-  
+    TLorentzVector testBetaCorrection;
     if(debugCOUT) std::cout<< " bau 2 " << std::endl;   
     for (CaloParticle::sc_iterator it_sc = simClusterRefVector.begin(); it_sc != simClusterRefVector.end(); ++it_sc) {
       const SimCluster simCluster = (*(*it_sc));
@@ -788,7 +792,7 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	  float rhPhi = recHitTools.getPhi(hitid);
 
 	  rhPt = rhEnergy/cosh(rhEta);
-	  
+
 	  h2_dPhivsdEta_rhGen->Fill(reco::deltaPhi(rhPhi, it_caloPart->phi()), rhEta - it_caloPart->eta());
 	  h2_dPhivsdEta_rhAxis->Fill(reco::deltaPhi(rhPhi, axPhi), rhEta - axEta);
 	  h2_dPhivsdEta_GenAxis->Fill(reco::deltaPhi(it_caloPart->phi(), axPhi), it_caloPart->eta() - axEta);
@@ -896,17 +900,14 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	int num68 = 0;
 
 	// if(debugCOUT)	std::cout << "ora problems size = " << totSize << std::endl;
-	// for(int ij=0; ij<totSize; ++ij){
-	//   if(float(ij+1) < totSize*0.3 || ij < 2){
-	//     sumCut += timePerEtaRadiusDistr[iet][irad].at(ij);
-	//     numCut += 1;
-	//   }
-	//   if(timePerEtaRadiusDistr[iet][irad].at(ij) < mpv + 2.*sigma || ij < 2){
-	//     sum68 += timePerEtaRadiusDistr[iet][irad].at(ij);
-	//     hTimeCut_Eta_dRadius[iet][irad]->Fill(timePerEtaRadiusDistr[iet][irad].at(ij));
-        //     num68 += 1;
-	//   }
-	// }
+	for(int ij=0; ij<totSize; ++ij){
+	  float resW = timePerEtaRadiusDistr[iet][irad].at(ij).second;
+	  if((irad == 0 && float(ij+1) > totSize*0.1 && float(ij+1) < totSize*0.6) ||
+	     (irad == 1 && float(ij+1) > totSize*0.1 && float(ij+1) < totSize*0.5)){
+	    sumCut += timePerEtaRadiusDistr[iet][irad].at(ij).first/(resW*resW);
+	    numCut += 1/(resW*resW);
+	  }
+	}
 
 	if(totSize > 0){
 	  //	  std::cout << " >>> totSize = " << totSize << " max bin = " << int(totSize*0.32)  << " diff 0.68 = " << int(totSize*0.68) <<std::endl;
@@ -916,12 +917,14 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	int startBin = 0;
 	int endBin = totSize;
 
+	float fractionToKeep = 0.68;
+	//float fractionToKeep = 0.50;
 
-	bool ra1 = false;
-	bool ra2 = true;
+	bool ra1 = true;
+	bool ra2 = false;
 	if(ra1){
-	for(int ij=0; ij<int(totSize*0.32); ++ij){
-	  float localDiff = fabs(timePerEtaRadiusDistr[iet][irad].at(ij).first - fabs(timePerEtaRadiusDistr[iet][irad].at(int(ij+totSize*0.68)).first));
+	  for(int ij=0; ij<int(totSize*(1.-fractionToKeep)); ++ij){
+	    float localDiff = fabs(timePerEtaRadiusDistr[iet][irad].at(ij).first - fabs(timePerEtaRadiusDistr[iet][irad].at(int(ij+totSize*fractionToKeep)).first));
 	  //	  std::cout << " localDiff = " << localDiff << " jj = " << ij << " diffTimeValues = " << diffTimeValues << std::endl;
 	  if(localDiff < diffTimeValues){
 	    diffTimeValues = localDiff;
@@ -929,9 +932,9 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	  }
 	}
 
-	if(fabs(timePerEtaRadiusDistr[iet][irad].at(0).first - timePerEtaRadiusDistr[iet][irad].at(totSize-1).first) > 0.08){
+	//if(fabs(timePerEtaRadiusDistr[iet][irad].at(0).first - timePerEtaRadiusDistr[iet][irad].at(totSize-1).first) > 0.08){
 	  startBin = startTBin;
-	  endBin = int(startBin+totSize*0.68);
+	  endBin = int(startBin+totSize*fractionToKeep);
 	  float HalfTimeDiff = std::abs(timePerEtaRadiusDistr[iet][irad].at(startBin).first - timePerEtaRadiusDistr[iet][irad].at(endBin).first) / 2.;
 	  for(int ij=0; ij<startBin; ++ij){
 	    if((timePerEtaRadiusDistr[iet][irad].at(ij).first) > (timePerEtaRadiusDistr[iet][irad].at(startBin).first - HalfTimeDiff) ){
@@ -945,7 +948,7 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	      break;
 	    }
 	  }	  
-	}
+	  //}
 	}
 
 	if(ra2){
@@ -988,12 +991,12 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	  hTimeCut_Eta_dRadius[iet][irad]->Fill(timePerEtaRadiusDistr[iet][irad].at(ij).first);
 	  num68 += 1/(resW*resW);
 
-	  sumCut += timePerEtaRadiusDistr[iet][irad].at(ij).first;
-	  numCut += 1;
+	  // sumCut += timePerEtaRadiusDistr[iet][irad].at(ij).first;
+	  // numCut += 1;
 	}
 	}
-	timePerEtaRadiusAvgCutH[iet][irad] = sumCut;
-	totRHPerEtaRadiusAvgCutH[iet][irad] = numCut;
+	//	timePerEtaRadiusAvgCutH[iet][irad] = sumCut;
+	//	totRHPerEtaRadiusAvgCutH[iet][irad] = numCut;
 	
 	timePerEtaRadiusAvg68[iet][irad] = sum68;
 	totRHPerEtaRadiusAvg68[iet][irad] = num68;
@@ -1022,6 +1025,7 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	h_totEvtsEtaRadius_Eta_dRadius[iet][irad]->SetBinContent(1, h_totEvtsEtaRadius_Eta_dRadius[iet][irad]->GetBinContent(1)+1);
 
 	hEnergy_Eta_dRadius[iet][irad]->Fill(1.*totEnergyPerEtaRadius[iet][irad]);
+	testBetaCorrection.SetPtEtaPhiE(it_caloPart->pt(), etaGen, phiGen, it_caloPart->energy());
 
 	if(totRHPerEtaRadius[iet][irad] > 2){
 	  totEvtsEtaRadius_withTime[iet][irad] += 1;
@@ -1030,12 +1034,17 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	  if(debugCOUT) std::cout<< " bau 6 v1 " << std::endl;
 
 	  hEnergyWithTime_Eta_dRadius[iet][irad]->Fill(1.*totEnergyWithTimePerEtaRadius[iet][irad]);
-	  hAverageTime_Eta_dRadius[iet][irad]->Fill(1.*timePerEtaRadius[iet][irad]/totRHPerEtaRadius[iet][irad]);
-	  hAverageTime_Eta_dRadius_AvgArm[iet][irad]->Fill((1./(1.*timePerEtaRadius_AvgArm[iet][irad]/totRHPerEtaRadius_AvgArm[iet][irad])) - 1.);
-	  hAverageTime_Eta_dRadius_ResoWe[iet][irad]->Fill(1.*timePerEtaRadius_ResoWe[iet][irad]/totRHPerEtaRadius_ResoWe[iet][irad]);
+	  //	  hAverageTime_Eta_dRadius[iet][irad]->Fill(1.*timePerEtaRadius[iet][irad]/totRHPerEtaRadius[iet][irad]);
+	  //	  hAverageTime_Eta_dRadius_AvgArm[iet][irad]->Fill((1./(1.*timePerEtaRadius_AvgArm[iet][irad]/totRHPerEtaRadius_AvgArm[iet][irad])) - 1.);
+	  //	  hAverageTime_Eta_dRadius_ResoWe[iet][irad]->Fill(1.*timePerEtaRadius_ResoWe[iet][irad]/totRHPerEtaRadius_ResoWe[iet][irad]);
 	  if(irad < 2){
-	    hAverageTime_Eta_dRadius_AvgCutH[iet][irad]->Fill(1.*timePerEtaRadiusAvgCutH[iet][irad]/totRHPerEtaRadiusAvgCutH[iet][irad]);
+	    float distVtx = sqrt(pow(axX-vx, 2) + pow(axY-vy, 2) + pow(axZ-vz, 2));
+	    //should use the distance up to the start of the shower => at least barycenter of hits on the cluster
+	    float correction = distVtx * (testBetaCorrection.Beta() - 1.)/ testBetaCorrection.Beta() / (0.1*CLHEP::c_light); //cm/ns
+	    //	    hAverageTime_Eta_dRadius_AvgCutH[iet][irad]->Fill(1.*timePerEtaRadiusAvgCutH[iet][irad]/totRHPerEtaRadiusAvgCutH[iet][irad]);
+	    //	    hAverageTime_Eta_dRadius_AvgCutHCorr[iet][irad]->Fill(1.*timePerEtaRadiusAvgCutH[iet][irad]/totRHPerEtaRadiusAvgCutH[iet][irad]+correction);
 	    hAverageTime_Eta_dRadius_Avg68[iet][irad]->Fill(1.*timePerEtaRadiusAvg68[iet][irad]/totRHPerEtaRadiusAvg68[iet][irad]);
+	    hAverageTime_Eta_dRadius_Avg68Corr[iet][irad]->Fill(1.*timePerEtaRadiusAvg68[iet][irad]/totRHPerEtaRadiusAvg68[iet][irad]+correction);
 	  }
 	//	if(debugCOUT) std::cout<< " bau 6 v2 " << std::endl;
 	  hFractionHitsWithTime_Eta_dRadius[iet][irad]->Fill(1.*totRHPerEtaRadius[iet][irad]/totRHPerEtaRadius_allTime[iet][irad]);	  

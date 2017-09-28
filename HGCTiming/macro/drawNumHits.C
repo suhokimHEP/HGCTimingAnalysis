@@ -109,8 +109,8 @@ void drawNumHits(){
   std::cout << " >>> ora prendo i file " << std::endl;
 
 
-  //std::string optionType = "CSF20LBA50";             
-  std::string optionType = "CSF20LEA50";             
+  std::string optionType = "CSF20LBA50";             
+  //std::string optionType = "CSF20LEA50";             
 
   
   std::string folderName = optionType+"/plotsAllTimeTot_CFD_"+pdgID+"_3hits";  
@@ -128,9 +128,38 @@ void drawNumHits(){
   }
   
   std::cout << " >>> fatto = presi " << std::endl;
+  TGraphErrors* nHitsWithTime[7][2];
+  TH1F* histoPluto[2];
+  for(int iF=0; iF<nFiles; ++iF){
+    for(int iRad=0; iRad<nBinsRad; ++iRad){
+      if(iRad < 2){
+	if(iF == 0){
+	  histoPluto[iRad] = new TH1F(Form("histoPluto%d", iRad), "", 1, 0., 1);
+	  histoPluto[iRad]->SetMarkerStyle(iStyle[iRad]);
+	}
+	nHitsWithTime[iF][iRad] = new TGraphErrors();
+	nHitsWithTime[iF][iRad]->SetPoint(0, 0., 0.);
 
+	for(int ieta=0; ieta<nBinsEta; ++ieta){
+	  //	  std::cout << " >>> name = " << Form("ana/hNumberHitsWithTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad) << std::endl;
+	  TH1F* dummy = (TH1F*)(inF[iF]->Get(Form("ana/hNumberHitsWithTime_Eta_dRadius_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  nHitsWithTime[iF][iRad]->SetPoint(ieta+1, (binStart+ieta*binWidth) + binWidth*0.5, dummy->GetMean());
+	  //	  nHitsWithTime[iF][iRad]->SetPointError(ieta+1, 0., dummy->GetRMS());
+	}
+	nHitsWithTime[iF][iRad]->SetPoint(nBinsEta+1, 3.5, 1.e4);
+	nHitsWithTime[iF][iRad]->SetMarkerColor(iColors[iF]);
+	nHitsWithTime[iF][iRad]->SetLineColor(iColors[iF]);
+	nHitsWithTime[iF][iRad]->SetLineWidth(2);
+	nHitsWithTime[iF][iRad]->SetMarkerStyle(iStyle[iRad]);
+      }
+    }
+  }
+
+  TGraphErrors* nHitsWithTimeEtaL[2];
   TH1F* time[7][4];
   TH1F* timeCut[7][4];
+  TH1F* energyRadEta_bin1[7][4];
+  TH1F* energyRadEta_bin5[7][4];
   TH1F* numHitsWithTime[7][4];
   TH1F* numHitsWithTimeEff[7][4];
   TH1F* numHitsWithTimeDistr[7][4];
@@ -145,9 +174,11 @@ void drawNumHits(){
 	hDummySt[iR]->SetMarkerStyle(iStyle[iR]);
 	hDummySt[iR]->SetLineColor(iColors[iR+2]);
       }
-
       time[iF][iR] = (TH1F*)(inF[iF]->Get(Form("ana/hTime_Eta_dRadius_Eta1.65-1.85_dRadius%d", iR)));
       timeCut[iF][iR] = (TH1F*)(inF[iF]->Get(Form("ana/hTimeCut_Eta_dRadius_Eta1.65-1.85_dRadius%d", iR)));
+
+      energyRadEta_bin1[iF][iR] = (TH1F*)(inF[iF]->Get(Form("ana/hEnergy_Eta_dRadius_Eta1.65-1.85_dRadius%d",iR)));
+      energyRadEta_bin5[iF][iR] = (TH1F*)(inF[iF]->Get(Form("ana/hEnergy_Eta_dRadius_Eta2.65-2.85_dRadius%d",iR)));
 
       testHisto = (TH1F*)(inF[iF]->Get(Form("ana/hNumberHitsWithTime_Eta_dRadius_Eta1.65-1.85_dRadius%d", iR)));
       numHitsWithTimeDistr[iF][iR] = (TH1F*)testHisto->Clone(Form("numHitsWithTimeDistr_iF%d_dRadius%d", iF, iR));
@@ -155,6 +186,27 @@ void drawNumHits(){
       numHitsWithTime[iF][iR]->Reset();
       numHitsWithTimeEff[iF][iR] = (TH1F*)testHisto->Clone(Form("numHitsWithTimeEff_iF%d_dRadius%d", iF, iR));
       numHitsWithTimeEff[iF][iR]->Reset();
+
+
+      if(iF == 0){
+	nHitsWithTimeEtaL[iR] = new TGraphErrors();
+	nHitsWithTimeEtaL[iR]->SetPoint(0, 0., 0.);
+      }
+      nHitsWithTimeEtaL[iR]->SetPoint(iF+1, ptValues.at(iF), testHisto->GetMean());
+      //      nHitsWithTimeEtaL[iR]->SetPointError(iF+1, 0., testHisto->GetRMS());
+      if(iR == 0){
+	nHitsWithTimeEtaL[iR]->SetMarkerColor(kBlue);
+	nHitsWithTimeEtaL[iR]->SetLineColor(kBlue);
+	nHitsWithTimeEtaL[iR]->SetLineWidth(2);
+	nHitsWithTimeEtaL[iR]->SetMarkerStyle(20);
+      }
+      if(iR == 1){
+	nHitsWithTimeEtaL[iR]->SetMarkerColor(kRed);
+	nHitsWithTimeEtaL[iR]->SetLineColor(kRed);
+	nHitsWithTimeEtaL[iR]->SetLineWidth(2);
+	nHitsWithTimeEtaL[iR]->SetMarkerStyle(21);
+      }
+
 
       int totEvt = 0;
       int numEvt = 0;      
@@ -199,8 +251,22 @@ void drawNumHits(){
       timeCut[iF][iR]->SetLineWidth(2);
       timeCut[iF][iR]->SetLineStyle(2);
       timeCut[iF][iR]->SetMarkerStyle(iStyle[iR]);
+
+      energyRadEta_bin1[iF][iR]->SetLineColor(iColors[iR+2]);
+      energyRadEta_bin1[iF][iR]->SetMarkerColor(iColors[iR+2]);
+      energyRadEta_bin1[iF][iR]->SetLineWidth(2);
+      energyRadEta_bin1[iF][iR]->SetMarkerStyle(iStyle[iR]);
+
+
+      energyRadEta_bin5[iF][iR]->SetLineColor(iColors[iR+2]);
+      energyRadEta_bin5[iF][iR]->SetMarkerColor(iColors[iR+2]);
+      energyRadEta_bin5[iF][iR]->SetLineWidth(2);
+      energyRadEta_bin5[iF][iR]->SetMarkerStyle(iStyle[iR]);
+
     }
   }
+  nHitsWithTimeEtaL[0]->SetPoint(nFiles+2, 500, 1000);
+  nHitsWithTimeEtaL[1]->SetPoint(nFiles+2, 500, 1000);
 
 
   std::cout << " ci sono ora stampo " << std::endl;
@@ -217,17 +283,46 @@ void drawNumHits(){
   }
   std::cout << " ci sono " << std::endl;
 
-  TLegend *legTGM2 = new TLegend(0.65,0.75,0.80,0.95,NULL,"brNDC");
+  TLegend *legTGM2 = new TLegend(0.65,0.55,0.80,0.75,NULL,"brNDC");
   legTGM2->SetTextFont(42);
   legTGM2->SetTextSize(0.05);
   legTGM2->SetFillColor(kWhite);
   legTGM2->SetLineColor(kWhite);
   legTGM2->SetShadowColor(kWhite);
-  legTGM2->AddEntry(hDummySt[0], " R < 2cm", "l");
-  legTGM2->AddEntry(hDummySt[1], " R < 5cm", "l");
-  legTGM2->AddEntry(hDummySt[2], " R < 10cm", "l");
+  legTGM2->AddEntry(hDummySt[0], " #rho < 2cm", "l");
+  legTGM2->AddEntry(hDummySt[1], " #rho < 5cm", "l");
+  legTGM2->AddEntry(hDummySt[2], " #rho < 10cm", "l");
   legTGM2->AddEntry(hDummySt[3], " all", "l");
-  
+
+
+  TLegend *legTGMS = new TLegend(0.80,0.75,0.90,0.95,NULL,"brNDC");
+  legTGMS->SetTextFont(42);
+  legTGMS->SetTextSize(0.03);
+  legTGMS->SetFillColor(kWhite);
+  legTGMS->SetLineColor(kWhite);
+  legTGMS->SetShadowColor(kWhite);
+  for(int iF=0; iF<nFiles; ++iF){
+    legTGMS->AddEntry(nHitsWithTime[iF][0], (nameFiles.at(iF)).c_str(), "l");
+  }
+
+  TLegend *legTGM2S = new TLegend(0.65,0.80,0.75,0.95,NULL,"brNDC");
+  legTGM2S->SetTextFont(42);
+  legTGM2S->SetTextSize(0.03);
+  legTGM2S->SetFillColor(kWhite);
+  legTGM2S->SetLineColor(kWhite);
+  legTGM2S->SetShadowColor(kWhite);
+  legTGM2S->AddEntry(histoPluto[0], " #rho < 2cm", "p");
+  legTGM2S->AddEntry(histoPluto[1], " #rho < 5cm", "p");
+
+
+  TLegend *legTGMSvsE = new TLegend(0.30,0.80,0.55,0.92,NULL,"brNDC");
+  legTGMSvsE->SetTextFont(42);
+  legTGMSvsE->SetTextSize(0.05);
+  legTGMSvsE->SetFillColor(kWhite);
+  legTGMSvsE->SetLineColor(kWhite);
+  legTGMSvsE->SetShadowColor(kWhite);
+  legTGMSvsE->AddEntry(nHitsWithTimeEtaL[0], "#rho < 2cm", "p");
+  legTGMSvsE->AddEntry(nHitsWithTimeEtaL[1], "#rho < 5cm", "p");
   
 
   std::cout << " legends ok  " << std::endl;
@@ -239,6 +334,52 @@ void drawNumHits(){
   tL.SetNDC();
   tL.SetTextSize(0.05);
   tL.SetTextFont(132);
+
+
+  TCanvas* ch_NumberHitsVsPt;
+  ch_NumberHitsVsPt = new TCanvas();
+  ch_NumberHitsVsPt->cd();
+  gPad->SetLogx();
+  gPad->SetLogy();
+  nHitsWithTimeEtaL[0]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+  nHitsWithTimeEtaL[0]->GetYaxis()->SetTitle("<n. hits>");
+  //  nHitsWithTimeEtaL[0]->GetXaxis()->SetRangeUser(1.5, 3.);
+  nHitsWithTimeEtaL[0]->GetXaxis()->SetRangeUser(0.1, 110.);
+  nHitsWithTimeEtaL[0]->GetYaxis()->SetRangeUser(1, 1000.);
+  nHitsWithTimeEtaL[0]->Draw("ap");
+  nHitsWithTimeEtaL[1]->Draw("same, p");
+
+  if(pdgID == "130") tL.DrawLatex(0.60,0.86, "|#eta| #approx 1.75   K^{0}_{L}");
+  if(pdgID == "22")  tL.DrawLatex(0.60,0.86, "|#eta| #approx 1.75   #gamma");
+
+  legTGMSvsE->Draw("same");
+  ch_NumberHitsVsPt->Print((folder+"/h_numHitsVsPt_file"+pdgID+".png").c_str(), "png");
+  ch_NumberHitsVsPt->Print((folder+"/h_numHitsVsPt_file"+pdgID+".pdf").c_str(), "pdf");
+  ch_NumberHitsVsPt->Print((folder+"/h_numHitsVsPt_file"+pdgID+".root").c_str(), "root");
+
+
+  TCanvas* ch_NumberHitsVseta;
+  ch_NumberHitsVseta = new TCanvas();
+  ch_NumberHitsVseta->cd();
+  gPad->SetLogy();
+  nHitsWithTime[0][0]->GetXaxis()->SetTitle("|#eta|");
+  nHitsWithTime[0][0]->GetYaxis()->SetTitle("<n. hits>");
+  nHitsWithTime[0][0]->GetXaxis()->SetRangeUser(1.5, 3.);
+  nHitsWithTime[0][0]->GetYaxis()->SetRangeUser(1., 5000.);
+  nHitsWithTime[0][0]->Draw("ap");
+  nHitsWithTime[0][1]->Draw("same, p");
+  for(int iF=1; iF<nFiles; ++iF){
+    for(int iR=0; iR<2; ++iR){
+      nHitsWithTime[iF][iR]->Draw("same, p");
+    }
+  }
+  legTGMS->Draw("same");
+  legTGM2S->Draw("same");
+  ch_NumberHitsVseta->Print((folder+"/h_numHitsVseta_file"+pdgID+".png").c_str(), "png");
+  ch_NumberHitsVseta->Print((folder+"/h_numHitsVseta_file"+pdgID+".pdf").c_str(), "pdf");
+  ch_NumberHitsVseta->Print((folder+"/h_numHitsVseta_file"+pdgID+".root").c_str(), "root");
+  ch_NumberHitsVseta->SaveAs((folder+"/h_numHitsVseta_file"+pdgID+".C").c_str(), "C");
+
 
   TCanvas* ch_NumberHits[7];
   for(int iF=0; iF<nFiles; ++iF){
@@ -262,7 +403,6 @@ void drawNumHits(){
     ch_NumberHits[iF]->Print((folder+"/h_numHits_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
     ch_NumberHits[iF]->Print((folder+"/h_numHits_file"+nameFiles.at(iF)+".root").c_str(), "root");
   }
-
 
   TCanvas* ch_NumberHitsEff[7];
   for(int iF=0; iF<nFiles; ++iF){
@@ -291,7 +431,7 @@ void drawNumHits(){
     ch_NumberHitsDistr[iF] = new TCanvas();
     ch_NumberHitsDistr[iF]->cd();
     numHitsWithTimeDistr[iF][0]->GetXaxis()->SetTitle("#n. hits with time (1.65 < |#eta| < 1.85)");
-    numHitsWithTimeDistr[iF][0]->GetYaxis()->SetTitle(" events");
+    numHitsWithTimeDistr[iF][0]->GetYaxis()->SetTitle(" events ");
     numHitsWithTimeDistr[iF][0]->GetXaxis()->SetRangeUser(0., 200.);
     if(iF == nFiles-1) numHitsWithTimeDistr[iF][0]->GetXaxis()->SetRangeUser(0., 1000.);
     numHitsWithTimeDistr[iF][0]->Draw("");
@@ -299,6 +439,7 @@ void drawNumHits(){
     for(int iR=1; iR<nBinsRad; ++iR){
       numHitsWithTimeDistr[iF][iR]->Draw("same");
     }
+
     tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
     //    legTGM->Draw("same");
     legTGM2->Draw("same");
@@ -312,9 +453,12 @@ void drawNumHits(){
   for(int iF=0; iF<nFiles; ++iF){
     ch_Time[iF] = new TCanvas();
     ch_Time[iF]->cd();
-    gPad->SetLogy();
-    time[iF][0]->GetXaxis()->SetTitle("recHit time (1.65 < |#eta| < 1.85)");
-    time[iF][0]->GetXaxis()->SetRangeUser(-2., 5.);
+    if(iF != 2)    gPad->SetLogy();
+    if(iF == 2) time[iF][0]->GetXaxis()->SetTitle("time of the hits (ns)");
+    else time[iF][0]->GetXaxis()->SetTitle("recHit time (1.65 < |#eta| < 1.85)");
+    time[iF][0]->GetXaxis()->SetRangeUser(-0.5, 2.);
+    if(iF == 2) time[iF][0]->GetYaxis()->SetRangeUser(0., 4000.);
+    //    time[iF][0]->GetXaxis()->SetRangeUser(-1.5, 4.5);
     time[iF][0]->GetYaxis()->SetTitle(" events");
     //    numHitsWithTimeDistr[iF][0]->GetXaxis()->SetRangeUser(0., 20.);
     //    numHitsWithTimeDistr[iF][0]->GetYaxis()->SetRangeUser(0., 1.01);
@@ -325,13 +469,64 @@ void drawNumHits(){
       time[iF][iR]->Draw("same");
       timeCut[iF][iR]->Draw("same");
     }
-    tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
+    if(iF == 2 && pdgID == "130") tL.DrawLatex(0.4,0.86, "|#eta| #approx 1.75   K^{0}_{L}  p_{T} = 2 GeV/c");
+    else if(iF == 2 && pdgID == "22") tL.DrawLatex(0.6,0.86, "|#eta| #approx 1.75   #gamma   p_{T} = 2 GeV/c");
+    else tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
     //    legTGM->Draw("same");
     legTGM2->Draw("same");
     ch_Time[iF]->Print((folder+"/h_recTime_file"+nameFiles.at(iF)+".png").c_str(), "png");
     ch_Time[iF]->Print((folder+"/h_recTime_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
     ch_Time[iF]->Print((folder+"/h_recTime_file"+nameFiles.at(iF)+".root").c_str(), "root");
   }
+
+
+
+  TCanvas* ch_Energy_bin1[7];
+  for(int iF=0; iF<nFiles; ++iF){
+    ch_Energy_bin1[iF] = new TCanvas();
+    ch_Energy_bin1[iF]->cd();
+    //    gPad->SetLogy();
+
+    energyRadEta_bin1[iF][0]->GetXaxis()->SetTitle("recHits Sum(pT) (1.65 < |#eta| < 1.85)");
+    energyRadEta_bin1[iF][0]->GetXaxis()->SetRangeUser(0., ptValues.at(iF)*2.);
+    energyRadEta_bin1[iF][0]->GetYaxis()->SetTitle(" events");
+    energyRadEta_bin1[iF][0]->Draw("");
+
+    for(int iR=1; iR<nBinsRad; ++iR){
+      energyRadEta_bin1[iF][iR]->Draw("same");
+      energyRadEta_bin1[iF][iR]->Draw("same");
+    }
+
+    tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
+    legTGM2->Draw("same");
+    ch_Energy_bin1[iF]->Print((folder+"/h_energy_bin1_file"+nameFiles.at(iF)+".png").c_str(), "png");
+    ch_Energy_bin1[iF]->Print((folder+"/h_energy_bin1_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
+    ch_Energy_bin1[iF]->Print((folder+"/h_energy_bin1_file"+nameFiles.at(iF)+".root").c_str(), "root");
+  }
+
+  TCanvas* ch_Energy_bin5[7];
+  for(int iF=0; iF<nFiles; ++iF){
+    ch_Energy_bin5[iF] = new TCanvas();
+    ch_Energy_bin5[iF]->cd();
+    //    gPad->SetLogy();
+
+    energyRadEta_bin5[iF][0]->GetXaxis()->SetTitle("recHits Sum(pT) (2.65 < |#eta| < 2.85)");
+    energyRadEta_bin5[iF][0]->GetXaxis()->SetRangeUser(0., ptValues.at(iF)*2.);
+    energyRadEta_bin5[iF][0]->GetYaxis()->SetTitle(" events");
+    energyRadEta_bin5[iF][0]->Draw("");
+
+    for(int iR=1; iR<nBinsRad; ++iR){
+      energyRadEta_bin5[iF][iR]->Draw("same");
+      energyRadEta_bin5[iF][iR]->Draw("same");
+    }
+
+    tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
+    legTGM2->Draw("same");
+    ch_Energy_bin5[iF]->Print((folder+"/h_energy_bin5_file"+nameFiles.at(iF)+".png").c_str(), "png");
+    ch_Energy_bin5[iF]->Print((folder+"/h_energy_bin5_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
+    ch_Energy_bin5[iF]->Print((folder+"/h_energy_bin5_file"+nameFiles.at(iF)+".root").c_str(), "root");
+  }
+
 
   return;
 

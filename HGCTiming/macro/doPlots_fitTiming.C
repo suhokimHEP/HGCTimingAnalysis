@@ -184,7 +184,9 @@ void doPlots_fitTiming(){
 
   std::cout << " >>> ora prendo i file " << std::endl;
   
-  std::string optionType = "CSF20LBA50";
+  //std::string optionType = "CSF20LEA50keep50";
+  std::string optionType = "CSF20LBA50keep68";
+  //std::string optionType = "CSF20LBA50";
   //std::string optionType = "CSF20LEA50";
 
 
@@ -275,7 +277,9 @@ void doPlots_fitTiming(){
 
 	if(doAllTheFits == true && iRad < 2){
 	  hAverageTime_Eta_dRadius = (TH1F*)(inF[iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68Corr", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgCutH", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_AvgCutHCorr", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
 	  // if(hAverageTime_Eta_dRadius->GetEntries() < 100) 	  hAverageTime_Eta_dRadius->Rebin(10);
 	  // else	  
 	  hAverageTime_Eta_dRadius->Rebin(5);
@@ -289,6 +293,7 @@ void doPlots_fitTiming(){
 	    outFileLong[iF] << (binStart+(2*ieta+1)*binWidth/2.) << " \t " << iRad << " \t " << hAverageTime_Eta_dRadius->GetRMS() << " \t " << efficiency << std::endl;
 	  }
 	  else{	  
+	    
 	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 0){
 	      hfithisto2->SetRange(-0.02, 0.02);
 	      hfithisto2->SetParameters(80, 0.001, 0.003);
@@ -306,6 +311,7 @@ void doPlots_fitTiming(){
 	      hfithisto2->SetParameters(28, 0.01, 0.007);
 	    }
 	    else{
+	    
 	      /*
 	      float YMax = 0.;
 	      float xMaxVal = getXmax(hAverageTime_Eta_dRadius, YMax);
@@ -468,7 +474,8 @@ void doPlots_fitTiming(){
   ch_M->cd();
   tgM[0][0]->GetXaxis()->SetTitle("#eta");
   tgM[0][0]->GetYaxis()->SetTitle("mean(t) ns");
-  tgM[0][0]->GetYaxis()->SetRangeUser(0., 0.6);
+  //RAFIXME  tgM[0][0]->GetYaxis()->SetRangeUser(0., 0.6);
+  tgM[0][0]->GetYaxis()->SetRangeUser(-0.06, 0.6);
   tgM[0][0]->Draw("apl");
   tgM[0][1]->Draw("pl, same");
   // tgM[0][2]->Draw("pl, same");
