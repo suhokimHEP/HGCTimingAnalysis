@@ -42,10 +42,10 @@ void drawNumHits(){
 
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
-  
-  gROOT->Reset();
-  gROOT->Macro("~/public/setStyle.C");
-  //  gROOT->LoadMacro("~/public/myStyle.C");
+
+  //  gROOT->Reset();
+  //  gROOT->Macro("~/public/setStyle.C");
+  //  gROOT->LoadMacro("~/public/myStyle.C");                                                                                                                                                                                                             
   gStyle->SetOptStat(1);
   gStyle->SetOptFit(1);
 
@@ -66,14 +66,14 @@ void drawNumHits(){
   //float binWidth = 0.5;
   float binStart = 1.65;
   
-  std::string pdgID = "130";
-  //std::string pdgID = "22";
+  //  std::string pdgID = "130";
+  std::string pdgID = "22";
   //std::string pdgID = "211";
 
 
   int nFiles = 7;
   std::vector<std::string> nameFiles;
-  std::vector<float> ptValues;
+  std::vector<int> ptValues;
   if(pdgID == "22"){
     nFiles = 3;
     nameFiles.push_back("PDG_"+pdgID+"_Pt2");
@@ -109,7 +109,8 @@ void drawNumHits(){
   std::cout << " >>> ora prendo i file " << std::endl;
 
 
-  std::string optionType = "CSF20LBA50";             
+  //  std::string optionType = "CSF20LBA50";             
+  std::string optionType = "CSF20LBA50keep68";             
   //std::string optionType = "CSF20LEA50";             
 
   
@@ -272,7 +273,7 @@ void drawNumHits(){
   std::cout << " ci sono ora stampo " << std::endl;
 
 
-  TLegend *legTGM = new TLegend(0.80,0.75,0.90,0.95,NULL,"brNDC");
+  TLegend *legTGM = new TLegend(0.80,0.70,0.90,0.90,NULL,"brNDC");
   legTGM->SetTextFont(42);
   legTGM->SetTextSize(0.02);
   legTGM->SetFillColor(kWhite);
@@ -283,9 +284,9 @@ void drawNumHits(){
   }
   std::cout << " ci sono " << std::endl;
 
-  TLegend *legTGM2 = new TLegend(0.65,0.55,0.80,0.75,NULL,"brNDC");
+  TLegend *legTGM2 = new TLegend(0.75,0.70,0.90,0.90,NULL,"brNDC");
   legTGM2->SetTextFont(42);
-  legTGM2->SetTextSize(0.05);
+  legTGM2->SetTextSize(0.04);
   legTGM2->SetFillColor(kWhite);
   legTGM2->SetLineColor(kWhite);
   legTGM2->SetShadowColor(kWhite);
@@ -305,7 +306,7 @@ void drawNumHits(){
     legTGMS->AddEntry(nHitsWithTime[iF][0], (nameFiles.at(iF)).c_str(), "l");
   }
 
-  TLegend *legTGM2S = new TLegend(0.65,0.80,0.75,0.95,NULL,"brNDC");
+  TLegend *legTGM2S = new TLegend(0.45,0.80,0.55,0.95,NULL,"brNDC");
   legTGM2S->SetTextFont(42);
   legTGM2S->SetTextSize(0.03);
   legTGM2S->SetFillColor(kWhite);
@@ -315,9 +316,9 @@ void drawNumHits(){
   legTGM2S->AddEntry(histoPluto[1], " #rho < 5cm", "p");
 
 
-  TLegend *legTGMSvsE = new TLegend(0.30,0.80,0.55,0.92,NULL,"brNDC");
+  TLegend *legTGMSvsE = new TLegend(0.50,0.80,0.80,0.90,NULL,"brNDC");
   legTGMSvsE->SetTextFont(42);
-  legTGMSvsE->SetTextSize(0.05);
+  legTGMSvsE->SetTextSize(0.04);
   legTGMSvsE->SetFillColor(kWhite);
   legTGMSvsE->SetLineColor(kWhite);
   legTGMSvsE->SetShadowColor(kWhite);
@@ -349,8 +350,8 @@ void drawNumHits(){
   nHitsWithTimeEtaL[0]->Draw("ap");
   nHitsWithTimeEtaL[1]->Draw("same, p");
 
-  if(pdgID == "130") tL.DrawLatex(0.60,0.86, "|#eta| #approx 1.75   K^{0}_{L}");
-  if(pdgID == "22")  tL.DrawLatex(0.60,0.86, "|#eta| #approx 1.75   #gamma");
+  if(pdgID == "130") tL.DrawLatex(0.20,0.86, "|#eta| #approx 1.75   K^{0}_{L}");
+  if(pdgID == "22")  tL.DrawLatex(0.20,0.86, "|#eta| #approx 1.75   #gamma");
 
   legTGMSvsE->Draw("same");
   ch_NumberHitsVsPt->Print((folder+"/h_numHitsVsPt_file"+pdgID+".png").c_str(), "png");
@@ -373,6 +374,11 @@ void drawNumHits(){
       nHitsWithTime[iF][iR]->Draw("same, p");
     }
   }
+
+  //0.4,0.86                                                                                                                                                                                                                                            
+  if(pdgID == "130") tL.DrawLatex(0.20,0.86, "K^{0}_{L}" );
+  if(pdgID == "22")  tL.DrawLatex(0.20,0.86, "#gamma   ");
+
   legTGMS->Draw("same");
   legTGM2S->Draw("same");
   ch_NumberHitsVseta->Print((folder+"/h_numHitsVseta_file"+pdgID+".png").c_str(), "png");
@@ -380,7 +386,8 @@ void drawNumHits(){
   ch_NumberHitsVseta->Print((folder+"/h_numHitsVseta_file"+pdgID+".root").c_str(), "root");
   ch_NumberHitsVseta->SaveAs((folder+"/h_numHitsVseta_file"+pdgID+".C").c_str(), "C");
 
-
+  bool doAll = false;
+  if(doAll){
   TCanvas* ch_NumberHits[7];
   for(int iF=0; iF<nFiles; ++iF){
     ch_NumberHits[iF] = new TCanvas();
@@ -390,12 +397,13 @@ void drawNumHits(){
     float Ymax = 0.;
     getXmax(numHitsWithTime[iF][3], Ymax);
     numHitsWithTime[iF][0]->GetXaxis()->SetRangeUser(0., 50.);
-    numHitsWithTime[iF][0]->GetYaxis()->SetRangeUser(0., Ymax*(1.1));
+    numHitsWithTime[iF][0]->GetYaxis()->SetRangeUser(0., Ymax * 4.);
     numHitsWithTime[iF][0]->Draw("");
 
     for(int iR=1; iR<nBinsRad; ++iR){
       numHitsWithTime[iF][iR]->Draw("same");
     }
+
     tL.DrawLatex(0.7,0.6,nameFiles.at(iF).c_str());
     //    legTGM->Draw("same");
     legTGM2->Draw("same");
@@ -478,8 +486,62 @@ void drawNumHits(){
     ch_Time[iF]->Print((folder+"/h_recTime_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
     ch_Time[iF]->Print((folder+"/h_recTime_file"+nameFiles.at(iF)+".root").c_str(), "root");
   }
+  }
+
+  /////////
+  TCanvas* ch_TimeDistr[7];
+  for(int iF=0; iF<nFiles; ++iF){
+    ch_TimeDistr[iF] = new TCanvas();
+    ch_TimeDistr[iF]->cd();
+    time[iF][0]->GetXaxis()->SetTitle("time of the hits (ns)");
+    time[iF][0]->GetXaxis()->SetRangeUser(-0.5, 2.);
+
+    // For the axis titles: 
+    gStyle->SetTitleColor(1, "XYZ");
+    gStyle->SetTitleFont(42, "XYZ");
+    gStyle->SetTitleSize(0.06, "XYZ");
+    gStyle->SetTitleXOffset(0.9);
+    // gStyle->SetTitleYOffset(1.5);
+    // gStyle->SetTitleYOffset(1.5); 
+    gStyle->SetTitleYOffset(1.4);
+    gStyle->SetTitleYOffset(1.4);
+    //  gStyle->SetTitleOffset(1.3,"Y"); 
+    
+    // For the axis labels:   
+    gStyle->SetLabelColor(1, "XYZ");
+    gStyle->SetLabelFont(42, "XYZ");
+    gStyle->SetLabelOffset(0.007, "XYZ");
+    gStyle->SetLabelSize(0.05, "XYZ");
+
+    float Ymax = 0.;
+    getXmax(time[iF][0], Ymax);
+    time[iF][0]->GetYaxis()->SetRangeUser(0., Ymax*2.5);
+    if(iF == 2) time[iF][0]->GetYaxis()->SetRangeUser(0., 4000.);
+    else time[iF][0]->GetYaxis()->SetRangeUser(0., 30000.);
+    time[iF][0]->GetYaxis()->SetTitle("");
+
+    time[iF][0]->Draw("");
+    for(int iR=1; iR<nBinsRad; ++iR){
+      time[iF][iR]->Draw("same");
+    }
+    //0.4,0.86
+    if(pdgID == "130") tL.DrawLatex(0.25,0.86, Form("|#eta| #approx 1.75   K^{0}_{L}   p_{T} = %d GeV/c", ptValues.at(iF)) );
+    if(pdgID == "22")  tL.DrawLatex(0.25,0.86, Form("|#eta| #approx 1.75   #gamma      p_{T} = %d GeV/c", ptValues.at(iF)));
 
 
+    legTGM2->Draw("same");
+    ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+".png").c_str(), "png");
+    ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+".pdf").c_str(), "pdf");
+    ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+".root").c_str(), "root");
+
+    //    time[iF][0]->GetYaxis()->SetRangeUser(0.1, Ymax*1.2);
+    // gPad->SetLogy();
+    // ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+"_log.png").c_str(), "png");
+    // ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+"_log.pdf").c_str(), "pdf");
+    // ch_TimeDistr[iF]->Print((folder+"/h_recTimeDistr_file"+nameFiles.at(iF)+"_log.root").c_str(), "root");
+  }
+
+  return;
 
   TCanvas* ch_Energy_bin1[7];
   for(int iF=0; iF<nFiles; ++iF){

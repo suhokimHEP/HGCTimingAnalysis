@@ -28,11 +28,12 @@
 
 void drawHistos(){
 
-  int type = 0;
+  int type = 2;
   TFile *_file0;
   if(type == 0) _file0 =  TFile::Open("../test/CSF20LBA50/JOB_PDG_22_Pt2_3fC/OutTimeHGC_RecHits_PDG_22_Pt2_3fC.root");  
   if(type == 1) _file0 =  TFile::Open("../test/CSF20LBA50/JOB_PDG_22_Pt60_3fC/OutTimeHGC_RecHits_PDG_22_Pt60_3fC.root");
-  if(type == 2) _file0 = TFile::Open("../test/CSF20LBA50/JOB_PDG_130_Pt2_3fC/OutTimeHGC_RecHits_PDG_130_Pt2_3fC.root");
+    if(type == 2) _file0 = TFile::Open("../test/CSF20LBA50/JOB_PDG_130_Pt2_3fC/OutTimeHGC_RecHits_PDG_130_Pt2_3fC.root");
+  //  if(type == 2) _file0 = TFile::Open("../test/CSF20LEA50/JOB_PDG_130_Pt2_3fC/OutTimeHGC_RecHits_PDG_130_Pt2_3fC.root");
   if(type == 3) _file0 = TFile::Open("../test/CSF20LBA50/JOB_PDG_130_Pt100_3fC/OutTimeHGC_RecHits_PDG_130_Pt100_3fC.root");
   if(type == 4) _file0 = TFile::Open("../test/CSF20LBA50/JOB_PDG_130_Pt1_3fC/OutTimeHGC_RecHits_PDG_130_Pt1_3fC.root");
   if(type == 5) _file0 = TFile::Open("../test/CSF20LBA50/JOB_PDG_130_Pt07_3fC/OutTimeHGC_RecHits_PDG_130_Pt07_3fC.root");
@@ -49,6 +50,7 @@ void drawHistos(){
   TLatex tL[4];
   for(int ij=0; ij<3; ++ij){
     hN[ij] = (TH1F*)_file0->Get(("ana/hAverageTime_Eta1.65-1.85_dRadius0"+names.at(ij)).c_str());
+    //  hN[ij] = (TH1F*)_file0->Get(("ana/hAverageTime_Eta2.45-2.65_dRadius0"+names.at(ij)).c_str());
     std::cout <<("ana/hAverageTime_Eta1.65-1.85_dRadius0"+names.at(ij)).c_str() << std::endl;
     // if(hN[ij]->GetEntries() < 100) hN[ij]->Rebin(10);
     if(type == 2 || type > 3) hN[ij]->Rebin(5);

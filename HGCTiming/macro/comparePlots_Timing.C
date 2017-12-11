@@ -66,9 +66,9 @@ void comparePlots_Timing(){
   //float binWidth = 0.5;
   float binStart = 1.65;
 
-  //std::string pdgID = "130";
+  std::string pdgID = "130";
   //std::string pdgID = "211";
-  std::string pdgID = "22";
+  //std::string pdgID = "22";
 
   int rad1 = 0;
 
@@ -230,17 +230,19 @@ void comparePlots_Timing(){
 	  if((rad1 == 0  && iRad < 1) || (rad1 == 1 && iRad == 1)){
 	if(doAllTheFits == true){
 	  hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
+	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68Corr", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
 	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
 	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
 	  // if(hAverageTime_Eta_dRadius->GetEntries() < 100) 	  hAverageTime_Eta_dRadius->Rebin(10);
 	  hAverageTime_Eta_dRadius->Rebin(5);
 
+	  /*
 	  if(hAverageTime_Eta_dRadius->GetRMS() < 0.01){
 	    tg[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hAverageTime_Eta_dRadius->GetRMS());
 	    tgM[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.), hAverageTime_Eta_dRadius->GetMean());
 	  }
 	  else{	
-	    
+	  */	    
 	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 0){
 	      hfithisto2->SetRange(-0.02, 0.02);
 	      hfithisto2->SetParameters(80, 0.001, 0.003);
@@ -258,6 +260,7 @@ void comparePlots_Timing(){
 	      hfithisto2->SetParameters(28, 0.01, 0.007);
 	    }
 	    else{
+	  
 	      /*
 	      float YMax = 0.;
 	      float xMaxVal = getXmax(hAverageTime_Eta_dRadius, YMax);
@@ -282,7 +285,7 @@ void comparePlots_Timing(){
 	    
 	    tgM[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hfithisto2->GetParameter(1));
 	    tgM[iT][iF]->SetPointError(ieta, 0, hfithisto2->GetParError(1));
-	  }
+	    // }
 	  /*
 	  c1 = new TCanvas();
 	  c1->cd();
@@ -310,47 +313,47 @@ void comparePlots_Timing(){
 
   TLegend *legTGM = new TLegend(0.7,0.7,0.90,0.93,NULL,"brNDC");
   legTGM->SetTextFont(42);
-  legTGM->SetTextSize(0.03);
+  legTGM->SetTextSize(0.04);
   legTGM->SetFillColor(kWhite);
   legTGM->SetLineColor(kWhite);
   legTGM->SetShadowColor(kWhite);
   for(int iF=0; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGM->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGM->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
   TLegend *legTGMShort = new TLegend(0.7,0.7,0.90,0.93,NULL,"brNDC");
   legTGMShort->SetTextFont(42);
-  legTGMShort->SetTextSize(0.03);
+  legTGMShort->SetTextSize(0.04);
   legTGMShort->SetFillColor(kWhite);
   legTGMShort->SetLineColor(kWhite);
   legTGMShort->SetShadowColor(kWhite);
   for(int iF=2; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMShort->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMShort->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
-  TLegend *legTGMD = new TLegend(0.7,0.15,0.90,0.35,NULL,"brNDC");
+  TLegend *legTGMD = new TLegend(0.7,0.15,0.90,0.32,NULL,"brNDC");
   legTGMD->SetTextFont(42);
-  legTGMD->SetTextSize(0.03);
+  legTGMD->SetTextSize(0.04);
   legTGMD->SetFillColor(kWhite);
   legTGMD->SetLineColor(kWhite);
   legTGMD->SetShadowColor(kWhite);
   for(int iF=0; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
 
-  TLegend *legTGMShortD = new TLegend(0.7,0.13,0.90,0.33,NULL,"brNDC");
+  TLegend *legTGMShortD = new TLegend(0.7,0.13,0.90,0.32,NULL,"brNDC");
   legTGMShortD->SetTextFont(42);
-  legTGMShortD->SetTextSize(0.03);
+  legTGMShortD->SetTextSize(0.04);
   legTGMShortD->SetFillColor(kWhite);
   legTGMShortD->SetLineColor(kWhite);
   legTGMShortD->SetShadowColor(kWhite);
   for(int iF=2; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMShortD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMShortD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
 
@@ -365,7 +368,7 @@ void comparePlots_Timing(){
   }
 
 
-  TLegend *legTGMOptD = new TLegend(0.5,0.15,0.65,0.33,NULL,"brNDC");
+  TLegend *legTGMOptD = new TLegend(0.5,0.13,0.65,0.25,NULL,"brNDC");
   legTGMOptD->SetTextFont(42);
   legTGMOptD->SetTextSize(0.04);
   legTGMOptD->SetFillColor(kWhite);
@@ -383,13 +386,19 @@ void comparePlots_Timing(){
   gStyle->SetOptStat(0);
   gStyle->SetOptFit(0);
 
+  TLatex latexLabel;
+  latexLabel.SetNDC();
+  latexLabel.SetTextSize(0.045);
+  //  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
+
+
   if(doAllTheFits == true){
   TCanvas* ch_M = new TCanvas();
   ch_M->cd();
   tgM[0][0]->GetXaxis()->SetTitle("|#eta|");
   tgM[0][0]->GetYaxis()->SetTitle("<time> (ns)");
-  tgM[0][0]->GetYaxis()->SetRangeUser(0., 0.6);
-  if(pdgID == "22") tgM[0][0]->GetYaxis()->SetRangeUser(0., 0.05);
+  tgM[0][0]->GetYaxis()->SetRangeUser(-0.01, 0.6);
+  if(pdgID == "22") tgM[0][0]->GetYaxis()->SetRangeUser(-0.01, 0.05);
   tgM[0][0]->Draw("apl");
   for(int iF=1; iF<nFiles; ++iF){
     tgM[0][iF]->Draw("pl, same");
@@ -403,6 +412,8 @@ void comparePlots_Timing(){
   }
   legTGM->Draw("same");
   legTGMOpt->Draw("same");
+
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
 
   if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 2cm  K^{0}_{L}");
   if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 5cm  K^{0}_{L}");
@@ -441,6 +452,8 @@ void comparePlots_Timing(){
   legTGM->Draw("same");
   legTGMOpt->Draw("same");
 
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
+
   if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 2cm  K^{0}_{L}");
   if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 5cm  K^{0}_{L}");
   if(rad1 == 0 && pdgID == "22")  tL.DrawLatex(0.25, 0.85, "#rho #leq 2cm  #gamma");
@@ -476,6 +489,8 @@ void comparePlots_Timing(){
   legTGMShort->Draw("same");
   //legTGM->Draw("same");
   legTGMOpt->Draw("same");
+
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
 
   if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 2cm  K^{0}_{L}");
   if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 5cm  K^{0}_{L}");
@@ -513,6 +528,8 @@ void comparePlots_Timing(){
   legTGMShort->Draw("same");
   //legTGM->Draw("same");
   legTGMOpt->Draw("same");
+
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
 
   if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 2cm  K^{0}_{L}");
   if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.85, "#rho #leq 5cm  K^{0}_{L}");
@@ -553,10 +570,12 @@ void comparePlots_Timing(){
   //legTGM->Draw("same");
   legTGMOptD->Draw("same");
   
-  if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.25, "#rho #leq 2cm  K^{0}_{L}");
-  if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.25, "#rho #leq 5cm  K^{0}_{L}");
-  if(rad1 == 0 && pdgID == "22")  tL.DrawLatex(0.25, 0.25, "#rho #leq 2cm  #gamma");
-  if(rad1 == 1 && pdgID == "22")  tL.DrawLatex(0.25, 0.25, "#rho #leq 5cm  #gamma");
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
+
+  if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.20, "#rho #leq 2cm  K^{0}_{L}");
+  if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.20, "#rho #leq 5cm  K^{0}_{L}");
+  if(rad1 == 0 && pdgID == "22")  tL.DrawLatex(0.25, 0.20, "#rho #leq 2cm  #gamma");
+  if(rad1 == 1 && pdgID == "22")  tL.DrawLatex(0.25, 0.20, "#rho #leq 5cm  #gamma");
 
 
   if(rad1 == 1){
@@ -591,10 +610,13 @@ void comparePlots_Timing(){
   //legTGM->Draw("same");
   legTGMOptD->Draw("same");
 
-  if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.25, "#rho #leq 2cm  K^{0}_{L}");
-  if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.25, "#rho #leq 5cm  K^{0}_{L}");
-  if(rad1 == 0 && pdgID == "22")  tL.DrawLatex(0.25, 0.25, "#rho #leq 2cm  #gamma");
-  if(rad1 == 1 && pdgID == "22")  tL.DrawLatex(0.25, 0.25, "#rho #leq 5cm  #gamma");
+
+  latexLabel.DrawLatex(0.20, 0.96, "#font[62]{CMS} #font[52]{Phase-2 Simulation}");  
+
+  if(rad1 == 0 && pdgID == "130")  tL.DrawLatex(0.25, 0.20, "#rho #leq 2cm  K^{0}_{L}");
+  if(rad1 == 1 && pdgID == "130")  tL.DrawLatex(0.25, 0.20, "#rho #leq 5cm  K^{0}_{L}");
+  if(rad1 == 0 && pdgID == "22")  tL.DrawLatex(0.25, 0.20, "#rho #leq 2cm  #gamma");
+  if(rad1 == 1 && pdgID == "22")  tL.DrawLatex(0.25, 0.20, "#rho #leq 5cm  #gamma");
 
 
   if(rad1 == 1){
