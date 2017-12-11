@@ -61,52 +61,42 @@ void comparePlots_Timing(){
   
   int nBinsEta = 6;
   float binWidth = 0.2;
-  int nBinsRad = 4;
+  int nBinsRad = 1;
   //int nBinsEta = 3;
   //float binWidth = 0.5;
   float binStart = 1.65;
 
-  //std::string pdgID = "130";
+  std::string pdgID = "130";
   //std::string pdgID = "211";
-  std::string pdgID = "22";
+  //std::string pdgID = "22";
 
   int rad1 = 0;
 
-  int nFiles = 7;
+  int nFiles = 3;
   std::vector<std::string> nameFiles;
   std::vector<float> ptValues;
-  if(pdgID == "22"){
-    nFiles = 3;
-    nameFiles.push_back("PDG_"+pdgID+"_Pt2");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt5");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt60");
-    ptValues.push_back(2);
-    ptValues.push_back(5);
-    ptValues.push_back(60);
-  }
-  else{
-    nameFiles.push_back("PDG_"+pdgID+"_Pt07");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt1");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt2");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt5");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt10");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt30");
-    nameFiles.push_back("PDG_"+pdgID+"_Pt100");
-    ptValues.push_back(0.7);
-    ptValues.push_back(1);
-    ptValues.push_back(2);
-    ptValues.push_back(5);
-    ptValues.push_back(10);
-    ptValues.push_back(30);
-    ptValues.push_back(100);
-  }
+  nFiles = 3;
+  nameFiles.push_back("PDG_"+pdgID+"_pt2");
+  nameFiles.push_back("PDG_"+pdgID+"_pt5");
+  nameFiles.push_back("PDG_"+pdgID+"_pt10");
+  ptValues.push_back(2);
+  ptValues.push_back(5);
+  ptValues.push_back(10);
+
+  int numberOfBins = 2;
+  std::vector<std::string> binName;
+  binName.push_back("1.65-1.85");
+  binName.push_back("2.65-2.85");
+  std::vector<float> binValue;
+  binValue.push_back(1.65);
+  binValue.push_back(2.65);
 
 
   int nOptions = 2;
   std::vector<std::string> nameOptions;
   std::vector<std::string> nameOptionsLeg;
-  nameOptions.push_back("CSF20LBA50keep68");
-  nameOptions.push_back("CSF20LEA50keep68");
+  nameOptions.push_back("ACfix_bkp210FixTime_double_0PU_allEta");
+  nameOptions.push_back("ACfix_bkp210FixTime_double_0PU_allEta_aged");
   nameOptionsLeg.push_back("0 fb^{-1}");
   nameOptionsLeg.push_back("3000 fb^{-1}");
 
@@ -119,7 +109,7 @@ void comparePlots_Timing(){
   // nameOptions.push_back("CSF30LEA20");   
 
 
-  TH1F* hDummy[7];
+  TH1F* hDummy[3];
   TH1F* hDummySt[8];
 
   for(int iT=0; iT<nOptions; ++iT){
@@ -138,9 +128,9 @@ void comparePlots_Timing(){
 
   std::cout << " >>> ora riempio TGraph " << std::endl;
   
-  TGraphErrors* tgM[8][7];
-  TGraphErrors* tg[8][7];
-  TGraphErrors* tgFrEvt[8][7];
+  TGraphErrors* tgM[8][3];
+  TGraphErrors* tg[8][3];
+  TGraphErrors* tgFrEvt[8][3];
   for(int iR=0; iR<nOptions; ++iR){
     for(int iT=0; iT<nFiles; ++iT){
       tgM[iR][iT] = new TGraphErrors();
@@ -179,11 +169,12 @@ void comparePlots_Timing(){
   //  std::cout << "../test/timingStudies/ " << nameOptions.at(0) << " /JOB_ " << nameFiles.at(0) << " _3fC/OutTimeHGC_RecHits_ " << nameFiles.at(0) << " _3fC.root " << std::endl;
 
   std::cout << " >>> ora prendo i file " << std::endl;   
-  TFile* inF[8][7];
+  TFile* inF[8][3];
   for(int iR=0; iR<nOptions; ++iR){
     for(int ij=0; ij<nFiles; ++ij){
-      std::string inFileName =  "../test/"+nameOptions.at(iR)+"/JOB_"+nameFiles.at(ij)+"_3fC/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_3fC.root";
-      
+      std::string inFileName;
+      if(iR == 0) inFileName = "../test/testPU/"+nameOptions.at(iR)+"/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_0PU_allEta.root";
+      if(iR == 1) inFileName = "../test/testPU/"+nameOptions.at(iR)+"/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_0PU_allEta_aged.root";
 
       // if(nameOptions.at(iR) == "CSF30LE" && ij == 6 && pdgID == "130") 
       // 	inFileName =  "../test/timingStudies/"+nameOptions.at(iR)+"/JOB_"+nameFiles.at(ij)+"_3fC/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_3fC.root_bkp";
@@ -203,6 +194,8 @@ void comparePlots_Timing(){
     }
   }
   
+
+  std::string folderName = "compareAgeing_singleFit_"+pdgID;
   std::cout << " >>> fatto = presi " << std::endl;
 
   // std::ofstream outFileLong[7];
@@ -224,47 +217,14 @@ void comparePlots_Timing(){
     for(int iF=0; iF<nFiles; ++iF){
       std::cout << " >>> iF = " << iF << " iT = " << iT<< std::endl;
 
-      for(int ieta=0; ieta<nBinsEta; ++ieta){
+      for(int ieta=0; ieta<numberOfBins; ++ieta){
 	for(int iRad=0; iRad<nBinsRad; ++iRad){	
 	  std::cout << " iF = " << iF  << " ieta = " << ieta << " irad = " << iRad << std::endl;
-	  if((rad1 == 0  && iRad < 1) || (rad1 == 1 && iRad == 1)){
-	if(doAllTheFits == true){
-	  hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_Avg68", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  //hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hAverageTime_Eta%.2f-%.2f_dRadius%d_ResoWe", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	  // if(hAverageTime_Eta_dRadius->GetEntries() < 100) 	  hAverageTime_Eta_dRadius->Rebin(10);
-	  hAverageTime_Eta_dRadius->Rebin(5);
+	  if(iRad < 2){
+	  if(doAllTheFits == true){
+	    hAverageTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form(("ana/hAverageTime_Eta"+binName.at(ieta)+"_dRadius%d_AvgInt").c_str(), iRad)) );
+	    hAverageTime_Eta_dRadius->Rebin(5);
 
-	  if(hAverageTime_Eta_dRadius->GetRMS() < 0.01){
-	    tg[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hAverageTime_Eta_dRadius->GetRMS());
-	    tgM[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.), hAverageTime_Eta_dRadius->GetMean());
-	  }
-	  else{	
-	    
-	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 0){
-	      hfithisto2->SetRange(-0.02, 0.02);
-	      hfithisto2->SetParameters(80, 0.001, 0.003);
-	    }
-	    if(pdgID == "130" && iF == nFiles-1 && ieta == 4 && iRad == 1){
-	      hfithisto2->SetRange(-0.05, 0.05);
-	      hfithisto2->SetParameters(30, 0.01, 0.007);
-	    }
-	    else if(pdgID == "130" && iF == nFiles-1 && ieta == 5 && iRad == 0){
-	      hfithisto2->SetRange(-0.02, 0.02);
-	      hfithisto2->SetParameters(80, 0.001, 0.003);
-	    }
-	    else if(pdgID == "130" && iF == nFiles-1 && ieta == 5 && iRad == 1){
-	      hfithisto2->SetRange(-0.05, 0.05);
-	      hfithisto2->SetParameters(28, 0.01, 0.007);
-	    }
-	    else{
-	      /*
-	      float YMax = 0.;
-	      float xMaxVal = getXmax(hAverageTime_Eta_dRadius, YMax);
-	      hfithisto->SetRange(xMaxVal - 2.*hAverageTime_Eta_dRadius->GetRMS(), xMaxVal + 2.*hAverageTime_Eta_dRadius->GetRMS());
-	      hfithisto->SetParameter(1, xMaxVal);
-	      hfithisto->SetParameter(2, hAverageTime_Eta_dRadius->GetRMS());
-	      */
 
 	    hfithisto->SetRange(hAverageTime_Eta_dRadius->GetMean() - 2.*hAverageTime_Eta_dRadius->GetRMS(), hAverageTime_Eta_dRadius->GetMean() + 2.*hAverageTime_Eta_dRadius->GetRMS());
 	    hfithisto->SetParameter(1, hAverageTime_Eta_dRadius->GetMean());
@@ -274,33 +234,30 @@ void comparePlots_Timing(){
 	    hfithisto2->SetRange(hfithisto->GetParameter(1) - 2.*hfithisto->GetParameter(2), hfithisto->GetParameter(1) + 2.*hfithisto->GetParameter(2));
 	    hfithisto2->SetParameters(hfithisto->GetParameter(0), hfithisto->GetParameter(1), hfithisto->GetParameter(2));
 
-	    }
-
 	    hAverageTime_Eta_dRadius->Fit("hfithisto2", "RQ");  
-	    tg[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hfithisto2->GetParameter(2));                        
+	    tg[iT][iF]->SetPoint(ieta, binValue.at(ieta),  hfithisto2->GetParameter(2));                        
 	    tg[iT][iF]->SetPointError(ieta, 0, hfithisto2->GetParError(2));     
 	    
-	    tgM[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hfithisto2->GetParameter(1));
+	    tgM[iT][iF]->SetPoint(ieta, binValue.at(ieta),  hfithisto2->GetParameter(1));
 	    tgM[iT][iF]->SetPointError(ieta, 0, hfithisto2->GetParError(1));
 	  }
-	  /*
+
 	  c1 = new TCanvas();
 	  c1->cd();
 	  hAverageTime_Eta_dRadius->GetXaxis()->SetRangeUser(-0.05, 1.);
 	  hAverageTime_Eta_dRadius->Draw();
 	  //	hfithisto2->Draw("same");
-	  c1->Print(Form((folderName+"/avgTime_Eta%.1f-%.1f_dRadius%d_"+nameFiles.at(iF)+".png").c_str(), (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad), "png");
+	  c1->Print(Form((folderName+"/avgTime_Eta"+binName.at(ieta)+"_dRadius%d_"+nameFiles.at(iF)+".png").c_str(), iRad), "png");
 	  c1->Delete();
 	  hAverageTime_Eta_dRadius->Delete();
-	  */
-	}
 
-	hFractionEvents_HitsWithTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form("ana/hFractionEvents_Hits_Eta%.2f-%.2f_dRadius%d", (binStart+ieta*binWidth), binStart+binWidth+ieta*binWidth, iRad)));
-	tgFrEvt[iT][iF]->SetPoint(ieta, (binStart+(2*ieta+1)*binWidth/2.),  hFractionEvents_HitsWithTime_Eta_dRadius->GetMean());
-	hFractionEvents_HitsWithTime_Eta_dRadius->Delete();
-
-	}
+	  }	  
+	  hFractionEvents_HitsWithTime_Eta_dRadius = (TH1F*)(inF[iT][iF]->Get(Form(("ana/hFractionEvents_Hits_Eta"+binName.at(ieta)+"_dRadius%d").c_str(), iRad)));
+	  float efficiency = hFractionEvents_HitsWithTime_Eta_dRadius->GetMean();
+	  tgFrEvt[iT][iF]->SetPoint(ieta, binValue.at(ieta),  efficiency);
+	  hFractionEvents_HitsWithTime_Eta_dRadius->Delete();
 	}//rad
+
       }//eta
     }//file
   }//type
@@ -316,7 +273,7 @@ void comparePlots_Timing(){
   legTGM->SetShadowColor(kWhite);
   for(int iF=0; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGM->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGM->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
   TLegend *legTGMShort = new TLegend(0.7,0.7,0.90,0.93,NULL,"brNDC");
@@ -327,36 +284,36 @@ void comparePlots_Timing(){
   legTGMShort->SetShadowColor(kWhite);
   for(int iF=2; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMShort->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMShort->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
   TLegend *legTGMD = new TLegend(0.7,0.15,0.90,0.35,NULL,"brNDC");
   legTGMD->SetTextFont(42);
-  legTGMD->SetTextSize(0.03);
+  legTGMD->SetTextSize(0.05);
   legTGMD->SetFillColor(kWhite);
   legTGMD->SetLineColor(kWhite);
   legTGMD->SetShadowColor(kWhite);
   for(int iF=0; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
 
   TLegend *legTGMShortD = new TLegend(0.7,0.13,0.90,0.33,NULL,"brNDC");
   legTGMShortD->SetTextFont(42);
-  legTGMShortD->SetTextSize(0.03);
+  legTGMShortD->SetTextSize(0.05);
   legTGMShortD->SetFillColor(kWhite);
   legTGMShortD->SetLineColor(kWhite);
   legTGMShortD->SetShadowColor(kWhite);
   for(int iF=2; iF<nFiles; ++iF){
     //legTGM->AddEntry(hDummy[iF], (nameFiles.at(iF)).c_str(), "l");
-    legTGMShortD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV/c",ptValues.at(iF)), "l");
+    legTGMShortD->AddEntry(hDummy[iF], Form("p_{T} = %.1f GeV",ptValues.at(iF)), "l");
   }
 
 
   TLegend *legTGMOpt = new TLegend(0.5,0.75,0.65,0.93,NULL,"brNDC");
   legTGMOpt->SetTextFont(42);
-  legTGMOpt->SetTextSize(0.04);
+  legTGMOpt->SetTextSize(0.05);
   legTGMOpt->SetFillColor(kWhite);
   legTGMOpt->SetLineColor(kWhite);
   legTGMOpt->SetShadowColor(kWhite);
@@ -367,7 +324,7 @@ void comparePlots_Timing(){
 
   TLegend *legTGMOptD = new TLegend(0.5,0.15,0.65,0.33,NULL,"brNDC");
   legTGMOptD->SetTextFont(42);
-  legTGMOptD->SetTextSize(0.04);
+  legTGMOptD->SetTextSize(0.05);
   legTGMOptD->SetFillColor(kWhite);
   legTGMOptD->SetLineColor(kWhite);
   legTGMOptD->SetShadowColor(kWhite);
@@ -394,6 +351,7 @@ void comparePlots_Timing(){
   for(int iF=1; iF<nFiles; ++iF){
     tgM[0][iF]->Draw("pl, same");
   }
+
 
   for(int iT=1; iT<nOptions; ++iT){
     tgM[iT][0]->Draw("pl, same");
