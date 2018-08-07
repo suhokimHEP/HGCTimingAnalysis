@@ -2,11 +2,13 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
 
 process = cms.Process("Demo")
-process.load('Configuration.Geometry.GeometryExtended2023D13Reco_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+process.load('Configuration.StandardSequences.Services_cff')
+process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load("FWCore.MessageService.MessageLogger_cfi")
-#process.load("RecoLocalCalo.HGCalRecProducers.hgcalLayerClusters_cfi")
+process.load('Configuration.Geometry.GeometryExtended2023D17Reco_cff')
+process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load('Configuration.StandardSequences.EndOfProcess_cff')
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
@@ -15,13 +17,19 @@ import FWCore.Utilities.FileUtils as FileUtils
 readFiles = cms.untracked.vstring()
 readFiles.extend(FileUtils.loadListFromFile ('INPUTFILELIST') )
 
+
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
                             fileNames = readFiles,
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring('keep *',
-                                                                'drop EcalEBTriggerPrimitiveDigisSorted_simEcalEBTriggerPrimitiveDigis_*_HLT'
-                                                                )
+                                                  #'drop EcalEBTriggerPrimitiveDigisSorted_simEcalEBTriggerPrimitiveDigis_*_HLT',
+                                                  'drop l1tEMTFHit2016Extras_simEmtfDigis_CSC_HLT',
+                                                  'drop l1tEMTFHit2016Extras_simEmtfDigis_RPC_HLT',
+                                                  'drop l1tEMTFHit2016s_simEmtfDigis__HLT',
+                                                  'drop l1tEMTFTrack2016Extras_simEmtfDigis__HLT',
+                                                  'drop l1tEMTFTrack2016s_simEmtfDigis__HLT'
+                                                  )
                             )
         
 
@@ -30,14 +38,13 @@ from HGCTimingAnalysis.HGCTiming.timeRecHitEstimator_cfi import HGCalTimeEstimat
 process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              detector = cms.string("all"),
                              rawRecHits = cms.bool(True),                              
-                             CFDTimeCorrection = cms.int32(CFDVal),
-                             cellType = cms.int32(CELLT),
-                             floorValue = cms.double(FLOORV),
-                             lifeAge = cms.int32(LIFEA),
-                             absTrend = cms.double(ABSTREND),
+                             particleGENPT = cms.double(PGENPT),
+                             CaloPartPDGID = cms.int32(CFDVal),
+                             timeOffset = cms.int32(TIMEOFF),
                              HGCEEInput = cms.InputTag('HGCalRecHit:HGCEERecHits'),
                              HGCFHInput = cms.InputTag('HGCalRecHit:HGCHEFRecHits'),
                              HGCBHInput = cms.InputTag('HGCalRecHit:HGCHEBRecHits'),
+                             caloClusterInput = cms.InputTag('hgcalLayerClusters'),
                              dEdXweights = HGCalTimeEstimator.dEdXweights,
                              thicknessCorrection = HGCalTimeEstimator.thicknessCorrection,
                              HGCEE_fCPerMIP = HGCalTimeEstimator.HGCEE_fCPerMIP,
