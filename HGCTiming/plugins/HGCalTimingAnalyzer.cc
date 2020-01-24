@@ -82,8 +82,6 @@ private:
   edm::EDGetTokenT<std::vector<TrackingVertex> > _vtx;
   edm::EDGetTokenT<std::vector<TrackingParticle> > _part;
   edm::EDGetTokenT<std::vector<CaloParticle> > _caloParticles;
-  edm::EDGetTokenT<reco::CaloClusterCollection> _caloClusters;
-  //  edm::EDGetTokenT<std::vector<reco::HGCalMultiCluster> > _multiClusters;
 
   std::string                detector;
   int                        algo;
@@ -91,7 +89,7 @@ private:
   bool                       rawRecHits;
   float                      particleGenPt;
   int                        CaloPartPDGID;
-  int                        timeOffset;
+  float                      timeOffset;
   hgcal::RecHitTools         recHitTools;
 
   std::vector<int> layersToSkip;
@@ -168,7 +166,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   rawRecHits(iConfig.getParameter<bool>("rawRecHits")),
   particleGenPt(iConfig.getParameter<double>("particleGENPT")),
   CaloPartPDGID(iConfig.getParameter<int>("CaloPartPDGID")),
-  timeOffset(iConfig.getParameter<int>("timeOffset"))
+  timeOffset(iConfig.getParameter<double>("timeOffset"))
 {
   nEvents = 0;
   nEventsGood = 0;
@@ -179,10 +177,10 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   debugCOUT4 = false;
 
   //relevant HGCAL acceptance
-  nBinsEta = 6;
-  binWidth = 0.2;
-  binStart = 1.65;
-  binEnd = 2.85;
+  nBinsEta = 2;
+  binWidth = 0.6;
+  binStart = 1.6;
+  binEnd = 2.8;
   //  nBinsRad = 4;
   nBinsRad = 2;
 
@@ -206,8 +204,6 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   _vtx = consumes<std::vector<TrackingVertex> >(edm::InputTag("mix","MergedTrackTruth"));
   _part = consumes<std::vector<TrackingParticle> >(edm::InputTag("mix","MergedTrackTruth"));
   _caloParticles = consumes<std::vector<CaloParticle> >(edm::InputTag("mix","MergedCaloTruth"));
-  _caloClusters = consumes<reco::CaloClusterCollection>(iConfig.getParameter<edm::InputTag>("caloClusterInput"));
-  //  _multiClusters = consumes<std::vector<reco::HGCalMultiCluster> >(edm::InputTag("hgcalLayerClusters"));
 
 
   //parameters to provide conversion GeV - MIP
@@ -338,13 +334,6 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.getByToken(_caloParticles, caloParticleHandle);
   const std::vector<CaloParticle>& caloParticles = *caloParticleHandle;
 
-  Handle<reco::CaloClusterCollection> caloClusters;
-  iEvent.getByToken(_caloClusters, caloClusters);
-
-  // Handle<std::vector<reco::HGCalMultiCluster> > multiClusterHandle;
-  // iEvent.getByToken(_multiClusters, multiClusterHandle);
-  // const std::vector<reco::HGCalMultiCluster>& multiClusters = *multiClusterHandle;
-  
 
   float vx = 0.;
   float vy = 0.;
@@ -463,8 +452,12 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     if(debugCOUT4)    std::cout << " caloParticles loop 1 simClusterRefVector.size() = " << simClusterRefVector.size() << " eta = " << it_caloPart->eta() << " pdgID = " 
 				<< it_caloPart->pdgId() << " energy = " << it_caloPart->pt() << " eventId().event() = " << it_caloPart->eventId().event() 
 				<< " eventId().bunchCrossing() = " << it_caloPart->eventId().bunchCrossing() << " Z vtx = " << vz << std::endl; 
-    if(CaloPartPDGID == 22 && (simClusterRefVector.size() > 1 || it_caloPart->pdgId() != 22 || it_caloPart->pt() != particleGenPt)) continue;
-    if(CaloPartPDGID == 130 && (simClusterRefVector.size() > 1 || it_caloPart->pdgId() != 130 || it_caloPart->pt() != particleGenPt)) continue;
+    if(CaloPartPDGID == 22 && (simClusterRefVector.size() != 2 || std::abs(it_caloPart->pdgId()) != 22 || it_caloPart->pt() != particleGenPt) && 
+       (it_caloPart->eta() != 1.75 || it_caloPart->eta() != 2.7)) continue;
+    if(CaloPartPDGID == 211 && (simClusterRefVector.size() != 1 || std::abs(it_caloPart->pdgId()) != 211 || it_caloPart->pt() != particleGenPt) && 
+       (it_caloPart->eta() != 1.75 || it_caloPart->eta() != 2.7)) continue;
+    if(CaloPartPDGID == 130 && (simClusterRefVector.size() > 1 || std::abs(it_caloPart->pdgId()) != 130 || it_caloPart->pt() != particleGenPt) && 
+       (it_caloPart->eta() != 1.75 || it_caloPart->eta() != 2.7)) continue;
     if(CaloPartPDGID == -22 && (simClusterRefVector.size() > 1 || it_caloPart->pdgId() != 22 || it_caloPart->pt() != particleGenPt)) continue;
     if(CaloPartPDGID == -130 && (simClusterRefVector.size() > 1 || it_caloPart->pdgId() != 130 || it_caloPart->pt() != particleGenPt)) continue;
 
@@ -495,7 +488,9 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     float axisZ = 0;
     float sumEnergyToNorm = 0;
     GlobalPoint showerAxis;
-    
+
+
+    /*    
     if(debugCOUT) std::cout<< " before showerAxis from recHits" << std::endl;
   
     //loop on rechit - matched to gen => shower axis (not really used anyway)
@@ -525,10 +520,12 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     axX = showerAxis.x();
     axY = showerAxis.y();
     axZ = showerAxis.z();
+    */
+
 
     if(evtGood) break;
   }
-  
+
 
   if(!evtGood) return;
   ++nEventsGood;
@@ -595,6 +592,8 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     const HGCalDetId hitid = iop->first;
     const HGCRecHit* hit = iop->second;
     
+    if(hit->time() == -1) continue;
+
     bool found = false;
     float rhEnergy = hit->energy();
     float rhTime = hit->time() - timeOffset;
@@ -607,14 +606,19 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     float rhPt = rhEnergy/cosh(rhEta);
 
     if(debugCOUT3)    std::cout << " loop over hits eta = " << rhEta  << std::endl;
-    if(rhEta < 0 && CaloPartPDGID > 0) continue;
-    if(rhEta > 0 && CaloPartPDGID < 0) continue;
+    if(rhEta < 0 && etaGen > 0) continue;
+    if(rhEta > 0 && etaGen < 0) continue;
 
     std::array<double,3> to{ {0., 0., rhZ} };
     utilsMet.layerIntersection(to, fromAxis, vtx);
     float deltaR = sqrt(pow(to[0] - rhX, 2) + pow(to[1] - rhY, 2));
+
+    //save time => no interest wrt large radii
+    if(deltaR > 5) continue;
+
     
     int etaBin = int((std::abs(etaGen) - binStart) / binWidth);
+    if(debugCOUT4) std::cout << " etaBin = " << etaBin << std::endl;
     int iRadBin = -1;
     //identify bin of radius around the gen axis
     for(int ir=0; ir<nBinsRad; ++ir){
@@ -623,8 +627,6 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 	break;
       }
     }
-    //save time => no interest wrt large radii
-    if(deltaR > 7) continue;
   
     if(debugCOUT4)    std::cout << " radius = " << deltaR  << std::endl;
     
@@ -632,13 +634,16 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
     //to extract some conversion factors
     unsigned int layer = recHitTools.getLayerWithOffset(hitid);
-    int thick = (hitid.det() != DetId::Forward) ? -1 : recHitTools.getSiThickness(hitid) / 100. - 1.;
+    int thick = int(recHitTools.getSiThickness(hitid)) / 100 - 1;
     
     int sectionType = -1;
-    if(hitid.subdetId() == HGCEE) sectionType = 0;
-    else if(hitid.subdetId() == HGCHEF) sectionType = 1;
-    else if(hitid.subdetId() == HGCHEB) sectionType = 2;
+    if(hitid.det() == DetId::HGCalEE || hitid.det() == DetId::HGCalHSi) sectionType = 0;
+    else sectionType = 2;
+    if(sectionType == 0 && rhL > 28) sectionType = 1;
     
+    
+    if(debugCOUT4)  std::cout << " thick = " << thick << " sectionType = " << sectionType << " rhL = " << rhL << std::endl;
+
     int energyMIP = 0.;
     if(sectionType == 2) energyMIP = hit->energy()/keV2GeV * keV2MIP;
     else if(sectionType == 0 || sectionType == 1) energyMIP = hit->energy()/scaleCorrection.at(thick)/keV2GeV / (weights.at(layer)/keV2MeV);

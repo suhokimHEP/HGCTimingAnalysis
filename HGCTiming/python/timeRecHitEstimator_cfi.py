@@ -1,18 +1,20 @@
 import FWCore.ParameterSet.Config as cms
 
 
-from RecoLocalCalo.HGCalRecProducers.HGCalRecHit_cfi import dEdX_weights, HGCalRecHit
-from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import HGCalUncalibRecHit
-from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import hgceeDigitizer, hgchefrontDigitizer, hgchebackDigitizer, nonAgedNoises, endOfLifeNoises
+from RecoLocalCalo.HGCalRecProducers.HGCalRecHit_cfi import dEdX_weights_v10, HGCalRecHit
+from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import fCPerMIP_v9 ##same as v10 - 13/01/2020
+from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import HGCAL_noise_fC, HGCAL_noise_heback, hgceeDigitizer, hgchefrontDigitizer, hgchebackDigitizer, nonAgedNoises, endOfLifeNoises
 
 HGCalTimeEstimator = cms.PSet(
-    dEdXweights = cms.vdouble(dEdX_weights),
-    thicknessCorrection = cms.vdouble(HGCalRecHit.thicknessCorrection),
-    HGCEE_fCPerMIP = cms.vdouble(HGCalUncalibRecHit.HGCEEConfig.fCPerMIP),
+    dEdXweights = cms.vdouble(dEdX_weights_v10),
+    thicknessCorrection = cms.vdouble(0.781,0.775,0.769), #from  HGCalRecHit.thicknessCorrection v10
+    HGCEE_fCPerMIP = cms.vdouble(fCPerMIP_v9),
     
-    HGCEE_noisefC = cms.vdouble(hgceeDigitizer.digiCfg.noise_fC),
-    HGCEF_noisefC = cms.vdouble(hgchefrontDigitizer.digiCfg.noise_fC), ##same as EE
-    HGCBH_noiseMIP = hgchebackDigitizer.digiCfg.noise_MIP, ##BH
+    timeOFFSET = hgceeDigitizer.tofDelay,
+
+    HGCEE_noisefC = cms.vdouble(HGCAL_noise_fC.values),
+    HGCEF_noisefC = cms.vdouble(HGCAL_noise_fC.values), ##same as EE
+    HGCBH_noiseMIP = cms.double(0.01), ##BH
     
     nonAgedNoises = cms.vdouble(nonAgedNoises),
     endOfLifeNoises = cms.vdouble(endOfLifeNoises),

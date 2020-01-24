@@ -43,7 +43,7 @@ float getXmax(TH1F* histo, float& YMax){
 
 
 
-void doPlots_fitTiming(std::string pdgID, std::string optionType = "TDRset_0PU_allEta"){
+void doPlots_fitTiming(std::string pdgID, std::string optionType = "in11X_200PU_allEta"){
   gROOT->Macro("/afs/cern.ch/user/a/amartell/public/setStyle.C");
 
   gStyle->SetOptStat(0);
@@ -64,20 +64,18 @@ void doPlots_fitTiming(std::string pdgID, std::string optionType = "TDRset_0PU_a
   int iStyle[4] = {20, 21, 22, 23}; //kGray+1};
   //  int iColors[6] = {kGreen+1, kBlue, kRed};
   
-  int nBinsEta = 6;
-  float binWidth = 0.2;
   int nBinsRad = 2;
-  //int nBinsEta = 3;
-  //float binWidth = 0.5;
-  float binStart = 1.65;
   
   int numberOfBins = 2;
+  std::vector<std::string> binNameOK;
+  binNameOK.push_back("1.65-1.85");
+  binNameOK.push_back("2.60-2.80");
   std::vector<std::string> binName;
-  binName.push_back("1.65-1.85");
-  binName.push_back("2.65-2.85");
+  binName.push_back("1.60-2.20");
+  binName.push_back("2.20-2.80");
   std::vector<float> binValue;
-  binValue.push_back(1.65);
-  binValue.push_back(2.65);
+  binValue.push_back(1.75);
+  binValue.push_back(2.70);
 
   //  std::string pdgID = "130";
   //std::string pdgID = "22";
@@ -86,12 +84,12 @@ void doPlots_fitTiming(std::string pdgID, std::string optionType = "TDRset_0PU_a
   int nFiles = 3;
   std::vector<std::string> nameFiles;
   std::vector<float> ptValues;
-  nameFiles.push_back("PDG_"+pdgID+"_pt2");
   nameFiles.push_back("PDG_"+pdgID+"_pt5");
-  nameFiles.push_back("PDG_"+pdgID+"_pt10");
-  ptValues.push_back(2);
+  nameFiles.push_back("PDG_"+pdgID+"_pt5");
+  nameFiles.push_back("PDG_"+pdgID+"_pt5");
   ptValues.push_back(5);
-  ptValues.push_back(10);
+  ptValues.push_back(5);
+  ptValues.push_back(5);
   TH1F* hDummy[7];
   TH1F* hDummySt[4];
 
@@ -156,7 +154,7 @@ void doPlots_fitTiming(std::string pdgID, std::string optionType = "TDRset_0PU_a
 
   TFile* inF[3];
   for(int ij=0; ij<nFiles; ++ij){
-    inF[ij] = TFile::Open(("../test/"+optionType+"/"+"/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_0PU_allEta.root").c_str());
+    inF[ij] = TFile::Open(("../test/"+optionType+"/"+"/OutTimeHGC_RecHits_"+nameFiles.at(ij)+"_200PU_AE.root").c_str());
   }
   
   std::cout << " >>> files loaded " << std::endl;
@@ -216,7 +214,7 @@ void doPlots_fitTiming(std::string pdgID, std::string optionType = "TDRset_0PU_a
 	  c1->cd();
 	  hAverageTime_Eta_dRadius->GetXaxis()->SetRangeUser(-0.5, 1.);
 	  hAverageTime_Eta_dRadius->Draw();
-	  c1->Print(Form((singleFitsFolderName+"/avgTime_Eta"+binName.at(ieta)+"_dRadius%d_"+nameFiles.at(iF)+".png").c_str(), iRad), "png");
+	  c1->Print(Form((singleFitsFolderName+"/avgTime_Eta"+binNameOK.at(ieta)+"_dRadius%d_"+nameFiles.at(iF)+".png").c_str(), iRad), "png");
 	  c1->Delete();
 	  hAverageTime_Eta_dRadius->Delete();
 	}//rad < 2
