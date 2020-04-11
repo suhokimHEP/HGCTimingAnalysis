@@ -47,7 +47,7 @@
 #include "RecoLocalCalo/HGCalRecAlgos/interface/HGCalDepthPreClusterer.h"
 #include "RecoLocalCalo/HGCalRecAlgos/interface/RecHitTools.h"
 
-#include "RecoParticleFlow/PFClusterProducer/plugins/SimMappers/ComputeClusterTime.h"
+#include "RecoLocalCalo/HGCalRecProducers/interface/ComputeClusterTime.h"
 #include "HGCTimingAnalysis/HGCTiming/interface/UtilClasses.h"
 
 
@@ -692,7 +692,13 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     for(int irad=0; irad<2; ++irad){
       
       float time  = -99.;
-      if(timePerEtaRadiusDistr[iet][irad].size() >= 3) time = hgcalsimclustertime::fixSizeHighestDensity(timePerEtaRadiusDistr[iet][irad]);
+      //just look at time, could look also at the error (.second)
+      //and compute time with weights
+      //unweighted time to compare wrt TDR performace
+      if(timePerEtaRadiusDistr[iet][irad].size() >= 3){
+	hgcalsimclustertime::ComputeClusterTime timeEstimator;
+	time = timeEstimator.fixSizeHighestDensity(timePerEtaRadiusDistr[iet][irad]).first;
+      }
       timePerEtaRadiusAvgInt[iet][irad] = time;
     }
   }
