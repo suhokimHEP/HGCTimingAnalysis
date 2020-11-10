@@ -5,7 +5,7 @@ process = cms.Process("Demo")
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D41Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2026D49Reco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
@@ -15,7 +15,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
 
 import FWCore.Utilities.FileUtils as FileUtils
 readFiles = cms.untracked.vstring()
-readFiles.extend(FileUtils.loadListFromFile ('./listTTBar_TTbar_0PU_11_2_0_pre6') )
+readFiles.extend(FileUtils.loadListFromFile ('./listTTBar_TTbar_0PU_11_2_0_pre6.txt') )
 
 
 process.source = cms.Source("PoolSource",
