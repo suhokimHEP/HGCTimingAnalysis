@@ -15,8 +15,8 @@ print 'currentDir = %s' %(currentDir)
 #nRUN = ["PDG_211_pt5_200PU_HE"]
 
 PDGID = 130
-nRUN = ["PDG_130_pt5_200PU_HE"]
-nRUN.append("PDG_130_pt5_200PU_LE")
+nRUN = ["testTimeCalib1p2Side_NuGun"]
+#nRUN.append("PDG_130_pt5_200PU_LE")
 
 #nRUN = ["PDG_22_pt10_0PU_allEta"]
 #nRUN = ["PDG_130_pt2_0PU_allEta"]
@@ -45,7 +45,8 @@ for num in nRUN:
     os.system('mkdir %s' %(subDir));
     print 'subDir = %s  >>>> DID YOU CREATE THIS?' %(subDir);
 
-    inFileList = currentDir+"/fileListAll_26D41/%s.txt" %(num);
+    #inFileList = currentDir+"/listTTBar_TTbar.txt" ;
+    inFileList = currentDir+"/listNuGun.txt" ;
     print 'inFileList = %s' %(inFileList);
 
     cfgFile = "partGun_NTUP_fromtemp_%s.py" %(num);
@@ -53,7 +54,7 @@ for num in nRUN:
     os.system("sed -i s~PGENPT~%s~g %s" %(PGENPT, subDir+"/"+cfgFile));
     os.system("sed -i s~CALOPARTPDGID~%s~g %s" %(PDGID, subDir+"/"+cfgFile));
     os.system("sed -i s~INPUTFILELIST~%s~g %s" %(inFileList, subDir+"/"+cfgFile));
-    os.system("sed -i s~OUTFILE~%s~g %s" %("OutTimeHGC_RecHits_"+num, subDir+"/"+cfgFile));
+    os.system("sed -i s~OUTFILE~%s~g %s" %("OutTimeHGC_RecHitsCalib_"+num, subDir+"/"+cfgFile));
 
     outScript = open('%s/bjob.sh' %(subDir),'w');
     outScript.write('#!/bin/bash \n');
