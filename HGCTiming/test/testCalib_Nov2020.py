@@ -15,7 +15,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
 
 import FWCore.Utilities.FileUtils as FileUtils
 readFiles = cms.untracked.vstring()
-readFiles.extend(FileUtils.loadListFromFile ('./listTTBar_TTbar.txt') )
+readFiles.extend(FileUtils.loadListFromFile ('./listTTBar_TTbar_0PU_11_2_0_pre6') )
 
 
 process.source = cms.Source("PoolSource",
