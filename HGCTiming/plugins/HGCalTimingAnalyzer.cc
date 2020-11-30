@@ -316,8 +316,9 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   if(debugCOUT) std::cout<< " >>> analyzer " << std::endl;
   using namespace edm;
 
-
-  recHitTools.getEventSetup(iSetup);
+  edm::ESHandle<CaloGeometry> geom;
+  iSetup.get<CaloGeometryRecord>().get(geom);
+  recHitTools.setGeometry(*geom);
 
   Handle<HGCRecHitCollection> recHitHandleEE;
   Handle<HGCRecHitCollection> recHitHandleFH;
