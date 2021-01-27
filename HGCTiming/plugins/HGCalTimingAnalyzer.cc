@@ -15,6 +15,8 @@
 #include "DataFormats/ForwardDetId/interface/HGCHEDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 
+#include "DataFormats/PatCandidates/interface/Muon.h"
+
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/CaloRecHit/interface/CaloClusterFwd.h"
@@ -82,6 +84,7 @@ private:
   edm::EDGetTokenT<std::vector<TrackingVertex> > _vtx;
   edm::EDGetTokenT<std::vector<TrackingParticle> > _part;
   edm::EDGetTokenT<std::vector<CaloParticle> > _caloParticles;
+  edm::EDGetTokenT<std::vector<pat::Muon>> _muonSrc;
 
   std::string                detector;
   int                        algo;
@@ -171,7 +174,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   nEvents = 0;
   nEventsGood = 0;
 
-  debugCOUT = false;
+  debugCOUT = true;
   debugCOUT2 = false;
   debugCOUT3 = false;
   debugCOUT4 = false;
@@ -204,6 +207,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   _vtx = consumes<std::vector<TrackingVertex> >(edm::InputTag("mix","MergedTrackTruth"));
   _part = consumes<std::vector<TrackingParticle> >(edm::InputTag("mix","MergedTrackTruth"));
   _caloParticles = consumes<std::vector<CaloParticle> >(edm::InputTag("mix","MergedCaloTruth"));
+  _muonSrc = consumes<std::vector<pat::Muon> >(edm::InputTag("slimmedMuons"));
 
 
   //parameters to provide conversion GeV - MIP
@@ -306,14 +310,52 @@ HGCalTimingAnalyzer::~HGCalTimingAnalyzer()
 }
 
 
+
+bool HGCalTimingAnalyzer::getTrajectoryStateClosestToBeamLine(const Trajectory& traj,
+					 const reco::BeamSpot& bs,
+					 const Propagator* thePropagator,
+					 TrajectoryStateClosestToBeamLine& tscbl) {
+  // get the state closest to the beamline
+    TrajectoryStateOnSurface stateForProjectionToBeamLineOnSurface =
+      traj.closestMeasurement(GlobalPoint(bs.x0(), bs.y0(), bs.z0())).updatedState();
+
+    if (!stateForProjectionToBeamLineOnSurface.isValid()) {
+      edm::LogError("CannotPropagateToBeamLine") << "the state on the closest measurement isnot valid. skipping track.";
+      return false;
+    }
+
+    const FreeTrajectoryState& stateForProjectionToBeamLine = *stateForProjectionToBeamLineOnSurface.freeState();
+
+    TSCBLBuilderWithPropagator tscblBuilder(*thePropagator);
+    tscbl = tscblBuilder(stateForProjectionToBeamLine, bs);
+
+    return tscbl.isValid();
+}
+
+void HGCalTimingAnalyzer::getPositionOnLayer(){
+
+  TrajectoryStateClosestToBeamLine tscbl;
+  bool tsbcl_status = getTrajectoryStateClosestToBeamLine(traj, bs, thePropagator, tscbl);
+
+  if (!tsbcl_status)
+    return reco::Track();
+
+  GlobalPoint v = tscbl.trackStateAtPCA().position();
+  math::XYZPoint pos(v.x(), v.y(), v.z());
+  GlobalVector p = tscbl.trackStateAtPCA().momentum();
+  math::XYZVector mom(p.x(), p.y(), p.z());
+
+}
+
+
 void
 HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   ++nEvents;
-  // if(nEvents != 383) return;
+  if(nEvents != 14) return;
   // if(nEvents == 383) debugCOUT4 = true;
-  if(debugCOUT) std::cout<< " >>> analyzer " << std::endl;
+  if(debugCOUT) std::cout<< " >>> analyzer evt = " << nEvents << std::endl;
   using namespace edm;
 
 
@@ -333,6 +375,38 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   Handle<std::vector<CaloParticle> > caloParticleHandle;
   iEvent.getByToken(_caloParticles, caloParticleHandle);
   const std::vector<CaloParticle>& caloParticles = *caloParticleHandle;
+
+  edm::Handle<std::vector<pat::Muon>> muons;
+  iEvent.getByToken(_muonSrc, muons);
+
+  std::cout << " nMuons = " << muons.product()->size() << std::endl;
+  for(const pat::Muon & muon : *muons){
+    if (muon.pt() < 10.) std::cout << " recoMu = " << muon.pt() << " " << muon.eta() << " " << muon.phi() << std::endl;
+    if (!muon.combinedMuon().isNull()){
+      reco::TrackRef muonTrk = muon.combinedMuon();
+      std::cout << " combinedMuon innerPosition() = " << muonTrk->innerPosition() << " innerMomentum() = " << muonTrk->innerMomentum() 
+		<< " outerPosition() = " << muonTrk->outerPosition() << " outerMomentum() = " << muonTrk->outerMomentum() << std::endl;
+    }
+    else if (!muon.globalTrack().isNull()){
+      reco::TrackRef muonTrk = muon.globalTrack();
+      std::cout << "globalTrk  innerPosition() = " << muonTrk->innerPosition() << " innerMomentum() = " << muonTrk->innerMomentum() 
+		<< " outerPosition() = " << muonTrk->outerPosition() << " outerMomentum() = " << muonTrk->outerMomentum() << std::endl;
+    }
+    else if(!muon.standAloneMuon().isNull()){
+      reco::TrackRef muonTrk = muon.standAloneMuon();
+      std::cout << "standaloneMuon  innerPosition() = " << muonTrk->innerPosition() << " innerMomentum() = " << muonTrk->innerMomentum()
+                << " outerPosition() = " << muonTrk->outerPosition() << " outerMomentum() = " << muonTrk->outerMomentum() << std::endl;
+    }
+    else if(!muon.track().isNull()){
+      reco::TrackRef muonTrk = muon.track();
+      std::cout << "standaloneMuon  innerPosition() = " << muonTrk->innerPosition() << " innerMomentum() = " << muonTrk->innerMomentum()
+                << " outerPosition() = " << muonTrk->outerPosition() << " outerMomentum() = " << muonTrk->outerMomentum() << std::endl;
+    }
+    
+
+
+  }
+
 
 
   float vx = 0.;
@@ -380,45 +454,95 @@ HGCalTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       iEvent.getByToken(_recHitsEE,recHitHandleEE);
       iEvent.getByToken(_recHitsFH,recHitHandleFH);
       iEvent.getByToken(_recHitsBH,recHitHandleBH);
-
-      NewrechitsEE = *recHitHandleEE;
-      NewrechitsFH = *recHitHandleFH;
-      for(unsigned int i = 0; i < NewrechitsEE.size(); ++i){
-	
-	const HGCalDetId hitid = NewrechitsEE[i].detid();
-	int rhL = recHitTools.getLayerWithOffset(hitid);
-	hitmap[NewrechitsEE[i].detid()] = &NewrechitsEE[i];
-      }
-      for(unsigned int i = 0; i < NewrechitsFH.size(); ++i){
-	
-	const HGCalDetId hitid = NewrechitsFH[i].detid();
-	int rhL = recHitTools.getLayerWithOffset(hitid);
-	hitmap[NewrechitsFH[i].detid()] = &NewrechitsFH[i];
-      }
+      
+      for (auto const& it : *recHitHandleEE)
+        hitmap[it.detid().rawId()] = &(it);
+      for (auto const& it : *recHitHandleFH)
+        hitmap[it.detid().rawId()] = &(it);
+      for (auto const& it : *recHitHandleBH)
+        hitmap[it.detid().rawId()] = &(it);
       break;
     }
   case 2:
     {
       iEvent.getByToken(_recHitsEE,recHitHandleEE);
-      NewrechitsEE = *recHitHandleEE;
-      for(unsigned int i = 0; i < NewrechitsEE.size(); i++){
-	hitmap[NewrechitsEE[i].detid()] = &NewrechitsEE[i];
-      }
+
+      for (auto const& it : *recHitHandleEE)
+        hitmap[it.detid().rawId()] = &(it);
       break;
     }
   case 3:
     {
       iEvent.getByToken(_recHitsFH,recHitHandleFH);
       iEvent.getByToken(_recHitsBH,recHitHandleBH);
-      NewrechitsFH = *recHitHandleFH;
-      for(unsigned int i = 0; i < NewrechitsFH.size(); i++){
-	hitmap[NewrechitsFH[i].detid()] = &NewrechitsFH[i];
-      }
+
+      for (auto const& it : *recHitHandleFH)
+        hitmap[it.detid().rawId()] = &(it);
+      for (auto const& it : *recHitHandleBH)
+        hitmap[it.detid().rawId()] = &(it);
       break;
     }
   default:
     break;
   }
+
+
+  ///////////////////
+  for(std::map<DetId, const HGCRecHit*>::iterator iop=hitmap.begin(); iop != hitmap.end(); ++iop){
+    const HGCalDetId hitid = iop->first;
+    const HGCRecHit* hit = iop->second;
+
+    bool found = false;
+    float rhEnergy = hit->energy();
+    float rhTime = hit->time() - timeOffset;
+    float CPfraction = 0.;
+    float rhX = recHitTools.getPosition(hitid).x();
+    float rhY = recHitTools.getPosition(hitid).y();
+    float rhZ = recHitTools.getPosition(hitid).z();
+    int rhL = recHitTools.getLayerWithOffset(hitid);
+    float rhEta = recHitTools.getEta(recHitTools.getPosition(hitid));
+    float rhPt = rhEnergy/cosh(rhEta);
+
+    //to extract some conversion factors 
+    unsigned int layer = recHitTools.getLayerWithOffset(hitid);
+    int thick = int(recHitTools.getSiThickness(hitid)) / 100 - 1;
+
+    int sectionType = -1;
+    if (hitid.det() == DetId::HGCalEE) sectionType = 0; 
+    else if (hitid.det() == DetId::HGCalHSi) sectionType = 1;
+    else if (hitid.det() == DetId::HGCalHSc) sectionType = 2;
+
+    if(sectionType != 2) continue;
+
+    std::cout << " thick = " << thick << " sectionType = " << sectionType << " rhL = " << rhL << " rhX = " << rhX << " rhY = " << rhY << " rhZ = " << rhZ << std::endl;
+
+    int energyMIP = 0.;
+    if(sectionType == 2) energyMIP = hit->energy()/keV2GeV * keV2MIP;
+    else if(sectionType == 0 || sectionType == 1) energyMIP = hit->energy()/scaleCorrection.at(thick)/keV2GeV / (weights.at(layer)/keV2MeV);
+
+    float energyCharge = 0.;
+    if(sectionType == 2) energyCharge = energyMIP * 1.;
+    else if(sectionType == 0 || sectionType == 1) energyCharge = energyMIP * fCPerMIP[thick];
+
+    double sigmaNoiseMIP = 1.;
+    if(sectionType == 2) sigmaNoiseMIP = noiseMIP;
+    else if(sectionType == 0 || sectionType == 1) sigmaNoiseMIP = noisefC[thick]/fCPerMIP[thick];
+
+    float charge = energyCharge;
+    float MIP = energyMIP;
+    float SoverN = energyMIP / sigmaNoiseMIP;
+
+    std::cout << " MIP = " << MIP << " charge =  " << charge << " SoN = " << SoverN << std::endl;
+  }
+
+
+
+  return;
+
+
+
+
+
 
   ////////////////////
   float etaGen = -1;
