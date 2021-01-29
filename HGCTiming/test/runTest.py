@@ -7,11 +7,12 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.Geometry.GeometryExtended2026D49Reco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 
 process.maxEvents = cms.untracked.PSet( 
-    input = cms.untracked.int32(15) 
+    input = cms.untracked.int32(-1) 
 )
 
 
@@ -23,7 +24,13 @@ process.maxEvents = cms.untracked.PSet(
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
                             #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/NoPU_111X_mcRun4_realistic_T15_v1-v1/100000/66CDE37C-EE86-0A48-BC19-063DDD5BC953.root'),
-                            fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/NoPU_castor_all_pt_tracks_111X_mcRun4_realistic_T15_v1-v1/100000/01307FF4-AB5E-FE49-BA98-5D1D4A60A59F.root'),
+                            #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/PU140_withNewMB_111X_mcRun4_realistic_T15_v1_ext1-v2/240000/FFFA8ACB-60E3-A943-B815-DF8491F45BFB.root'),
+                            #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/NoPU_castor_all_pt_tracks_111X_mcRun4_realistic_T15_v1-v1/100000/01307FF4-AB5E-FE49-BA98-5D1D4A60A59F.root'),
+                            fileNames = cms.untracked.vstring(
+                                'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/100000/670193A7-6401-A946-94BC-CFE3ECFC981E.root', 
+                                #'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/120000/0116EABC-7FED-E545-B3F5-7D2A7E64699E.root'
+                                #'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/120000/01463429-3B47-C54A-BD15-BC5DAAE5D83B.root'
+                            ),
                             #fileNames = readFiles,
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring('keep *',
