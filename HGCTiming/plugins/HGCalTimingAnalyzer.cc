@@ -22,6 +22,7 @@
 #include "DataFormats/ForwardDetId/interface/HGCEEDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCHEDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
@@ -76,7 +77,7 @@ public:
 
   void initialize(const edm::EventSetup &es);
   void buildLayers();
-  void propagateTrack(const edm::Event &ev, const edm::EventSetup &es, const reco::Track &tk);
+  void propagateTrack(const edm::Event &ev, const edm::EventSetup &es, const reco::Track &tk, int idx);
 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -98,7 +99,8 @@ private:
   edm::EDGetTokenT<std::vector<TrackingVertex> > _vtx;
   edm::EDGetTokenT<std::vector<TrackingParticle> > _part;
   edm::EDGetTokenT<std::vector<CaloParticle> > _caloParticles;
-  edm::EDGetTokenT<std::vector<pat::Muon>> _muonSrc;
+  edm::EDGetTokenT<std::vector<pat::Muon>> _muonSrcM;
+  edm::EDGetTokenT<std::vector<reco::Muon>> _muonSrc;
   const HGCalDDDConstants* hgcons_;
   inline static const std::string detectorName_ = "HGCalEESensitive";
   inline static const std::string propName_ = "PropagatorWithMaterial";
@@ -167,12 +169,36 @@ private:
   std::unique_ptr<GeomDet> firstDisk_[2][nSciLayers];
 
   TH2F* h2_occupancy[nSciLayers];
+  TH2F* energyDistr[nSciLayers];
+  TH2F* MIPDistr[nSciLayers];
+  TH2F* SoNDistr[nSciLayers];
   TProfile2D* h2_RvsL;
 
-  std::map<int, std::vector<float>> xposOnlayer;
-  std::map<int, std::vector<float>> yposOnlayer;
-  std::map<int, std::vector<float>> momOnlayer;
+  std::map<int, std::vector<float>> xposOnlayer[2];
+  std::map<int, std::vector<float>> yposOnlayer[2];
+  std::map<int, std::vector<float>> momOnlayer[2];
+  std::map<int, std::vector<int>> muIdxOnlayer[2];
 
+
+  TTree* newT;
+  std::vector<float> muonP;
+  std::vector<float> muonEta;
+  std::vector<float> muonPhi;
+  std::vector<float> crossX;
+  std::vector<float> crossY;
+  std::vector<float> crossZ;
+  std::vector<float> crossL;
+  std::vector<float> crossM;
+  std::vector<float> recHitX;
+  std::vector<float> recHitY;
+  std::vector<float> recHitZ;
+  std::vector<int> recHitiR;
+  std::vector<int> recHitiPhi;
+  std::vector<int> recHitiEta;
+  std::vector<int> recHitL;
+  std::vector<float> recHitEne;
+  std::vector<int> recHitMip;
+  std::vector<float> recHitNoise;
 
   bool debugCOUT;
 };  
@@ -206,7 +232,8 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   _vtx = consumes<std::vector<TrackingVertex> >(edm::InputTag("mix","MergedTrackTruth"));
   _part = consumes<std::vector<TrackingParticle> >(edm::InputTag("mix","MergedTrackTruth"));
   _caloParticles = consumes<std::vector<CaloParticle> >(edm::InputTag("mix","MergedCaloTruth"));
-  _muonSrc = consumes<std::vector<pat::Muon> >(edm::InputTag("slimmedMuons"));
+  _muonSrcM = consumes<std::vector<pat::Muon> >(edm::InputTag("slimmedMuons"));
+  _muonSrc = consumes<std::vector<reco::Muon> >(edm::InputTag("muons"));
   //propagation
   hdc_token_ = sumes.esConsumes<HGCalDDDConstants, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag("", detectorName_));
   bfield_token_ = sumes.esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>();
@@ -240,9 +267,27 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   keV2MeV = 1e-3;
   //end param conversion
 
-
-
   edm::Service<TFileService> fs;
+  newT = fs->make<TTree>("newT", "");
+  newT->Branch("muonP", &muonP);
+  newT->Branch("muonEta", &muonEta);
+  newT->Branch("muonPhi", &muonPhi);
+  newT->Branch("crossX", &crossX);
+  newT->Branch("crossY", &crossY);
+  newT->Branch("crossZ", &crossZ);
+  newT->Branch("crossL", &crossL);
+  newT->Branch("crossM", &crossM);
+  newT->Branch("recHitX", &recHitX);
+  newT->Branch("recHitY", &recHitY);
+  newT->Branch("recHitZ", &recHitZ);
+  newT->Branch("recHitiR", &recHitiR);
+  newT->Branch("recHitiPhi", &recHitiPhi);
+  newT->Branch("recHitiEta", &recHitiEta);
+  newT->Branch("recHitL", &recHitL);
+  newT->Branch("recHitEne", &recHitEne);
+  newT->Branch("recHitMip", &recHitMip);
+  newT->Branch("recHitNoise", &recHitNoise);
+
 
   h_minR_pos = fs->make<TH2F>("h_minR_pos", "", nSciLayers, 0., nSciLayers, 1000, 100., 600.);
   h_minR_neg = fs->make<TH2F>("h_minR_neg", "", nSciLayers, 0., nSciLayers, 1000, 100., 600.);
@@ -258,10 +303,15 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   h_layersZ = fs->make<TProfile>("h_layersZ", "", 50., 0., 50.);
 
 
-  for(int ij=0; ij<nSciLayers; ++ij)
+  for(int ij=0; ij<nSciLayers; ++ij){
     h2_occupancy[ij] = fs->make<TH2F>(Form("h2_occupancy_L%d", ij+firstSciLayer), "", 600, -300., 300, 600, -300., 300.);
-
+    energyDistr[ij] = fs->make<TH2F>(Form("energyDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
+    MIPDistr[ij] = fs->make<TH2F>(Form("MIPDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
+    SoNDistr[ij] = fs->make<TH2F>(Form("SoNDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
+  }
   h2_RvsL = fs->make<TProfile2D>("h2_RvsL", "", 50, 0., 50., 300, 0., 300);
+
+
 
   h_Vtx_x = fs->make<TH1F>("h_Vtx_x", "", 1000, -15., 15.);
   h_Vtx_y = fs->make<TH1F>("h_Vtx_y", "", 1000, -15., 15.);
@@ -301,17 +351,6 @@ void HGCalTimingAnalyzer::initialize(const edm::EventSetup &es) {
 }
 
 void HGCalTimingAnalyzer::buildLayers() {
-  // for(int ij=1; ij<=50; ++ij){
-  //    float zVal = hgcons_->waferZ(ij, true);
-  //    std::cout << " zVal = " << zVal << std::endl;
-  // }
-  //   std::pair<double, double> rMinMax = hgcons_->rangeR(zVal, true);
-  //   std::cout << " range for layer = " << ij << " min = " << rMinMax.first << " max = " << rMinMax.second << std::endl;
-  //   std::pair<double, double> rMinMaxL = hgcons_->rangeRLayer(ij, true);
-  //   std::cout << " range for layer = " << ij << " min = " << rMinMaxL.first << " max = " << rMinMaxL.second << std::endl;
-
-  // }
-
   float minR[nSciLayers] = {153., 153., 153., 153., 137., 137., 119., 119., 119., 119., 104., 104., 104., 104};
   float maxR[nSciLayers] = {199., 203., 213., 218., 229., 240., 252., 252., 252., 252., 252., 252., 252., 252.};
   float zVal[nSciLayers] = {411.29, 416.739, 422.187, 427.636, 436.172, 444.722, 453.263, 461.817, 470.371, 478.925, 487.47, 496.024, 504.577, 513.127};
@@ -319,11 +358,8 @@ void HGCalTimingAnalyzer::buildLayers() {
 
   for (int iSide = 0; iSide < 2; ++iSide) {
     for (int iL = 0; iL < nSciLayers; ++iL) {
-      //float zVal = hgcons_->waferZ(iL+firstSciLayer, true);
       float zSide = (iSide == 0) ? (-1. * zVal[iL]) : zVal[iL];    
       
-      std::cout << " building layer " << iL << " Z " << zSide << " min = " << minR[iL] << " max = " << maxR[iL] << std::endl;
-
       firstDisk_[iSide][iL] = std::make_unique<GeomDet>(Disk::build(Disk::PositionType(0, 0, zSide),
 								    Disk::RotationType(),
 								    SimpleDiskBounds(minR[iL], maxR[iL], zSide - 0.5, zSide + 0.5)).get());
@@ -334,26 +370,36 @@ void HGCalTimingAnalyzer::buildLayers() {
 
 
 void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
-					 const edm::EventSetup &es, const reco::Track& tk){
+					 const edm::EventSetup &es, const reco::Track& tk, int idx){
   auto bFieldProd = bfield_.product();
   const Propagator &prop = (*propagator_);
-  //prop.setPropagationDirection("alongMomentum");
-  //  std::cout << " direction =  " << prop.propagationDirection() << std::endl;
+
+  if(debugCOUT)
   std::cout << " propagateTrack p = " << tk.p() << " pt = " << tk.pt() << " eta = " << tk.eta() << std::endl;
 
   FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
   int iSide = int(tk.eta() > 0);
   for(int ij=0; ij<nSciLayers; ++ij){
     TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
-    // TrajectoryStateOnSurface tsos = prop.propagateWithPath(fts, firstDisk_[iSide][ij]->surface()).first;
+
     if (tsos.isValid()) {
-      std::cout << " valid " << std::endl;
       auto position = tsos.globalPosition();
       math::XYZPoint pos(position.x(), position.y(), position.z()); 
-      //auto momentum = tsos.globalMomentum();
-      xposOnlayer[ij].push_back(pos.x());
-      yposOnlayer[ij].push_back(pos.y());
-      momOnlayer[ij].push_back(tk.p());
+      xposOnlayer[iSide][ij].push_back(pos.x());
+      yposOnlayer[iSide][ij].push_back(pos.y());
+      momOnlayer[iSide][ij].push_back(tk.p());
+      muIdxOnlayer[iSide][ij].push_back(idx);
+      if(debugCOUT)
+	std::cout << " valid layer = " << ij << " trkX = " << pos.x() << " ttrkY = " << pos.y() << std::endl;
+
+      muonP.push_back(tk.p());
+      muonEta.push_back(tk.eta());
+      muonPhi.push_back(tk.phi());
+      crossX.push_back(pos.x());
+      crossY.push_back(pos.y());
+      crossZ.push_back(pos.z());
+      crossL.push_back(ij+firstSciLayer);
+      crossM.push_back(idx);
     }
   }
 }
@@ -369,12 +415,33 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   if(debugCOUT) std::cout<< " >>> analyzer evt = " << nEvents << std::endl;
   using namespace edm;
 
-
-  xposOnlayer.clear();
-  yposOnlayer.clear();
-  momOnlayer.clear();
-
+  for(int ij=0; ij<2; ++ij){
+    xposOnlayer[ij].clear();
+    yposOnlayer[ij].clear();
+    momOnlayer[ij].clear();
+    muIdxOnlayer[ij].clear();
+  }
   recHitTools.getEventSetup(iSetup);
+
+  muonP.clear();
+  muonEta.clear();
+  muonPhi.clear();
+  crossX.clear();
+  crossY.clear();
+  crossZ.clear();
+  crossL.clear();
+  crossM.clear();
+  recHitX.clear();
+  recHitY.clear();
+  recHitZ.clear();
+  recHitiR.clear();
+  recHitiPhi.clear();
+  recHitiEta.clear();
+  recHitL.clear();
+  recHitEne.clear();
+  recHitMip.clear();
+  recHitNoise.clear();
+  
 
   Handle<HGCRecHitCollection> recHitHandleEE;
   Handle<HGCRecHitCollection> recHitHandleFH;
@@ -393,15 +460,25 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   const std::vector<CaloParticle>& caloParticles = *caloParticleHandle;
   */
 
-  edm::Handle<std::vector<pat::Muon>> muons;
+
+  /*
+  edm::Handle<std::vector<pat::Muon>> muonsM;
+  iEvent.getByToken(_muonSrcM, muonsM);
+  */
+
+  edm::Handle<std::vector<reco::Muon>> muons;
   iEvent.getByToken(_muonSrc, muons);
 
   if(debugCOUT)  std::cout << " nMuons = " << muons.product()->size() << std::endl;
 
   
-  for(const pat::Muon & muon : *muons){
-    if (muon.p() < 10. && debugCOUT) std::cout << " recoMu = " << muon.p() << " " << muon.eta() << " " << muon.phi() << std::endl;
-    if(std::abs(muon.eta()) < 1.7 || std::abs(muon.eta()) > 2.8) continue;
+  int mCount = -1;
+  //  for(const pat::Muon & muon : *muons){
+  for(const reco::Muon & muon : *muons){
+    ++mCount;
+    if (debugCOUT) std::cout << " recoMu = " << muon.p() << " " << muon.eta() << " " << muon.phi() << " isGlobal = " << muon.isGlobalMuon() << std::endl;
+    if(!muon.isGlobalMuon() ) continue;
+    //if(std::abs(muon.eta()) < 1.7 || std::abs(muon.eta()) > 2.8) continue;
 
     // if (!muon.combinedMuon().isNull()){
     //   reco::TrackRef muonTrk = muon.combinedMuon();
@@ -423,26 +500,35 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     // }
     // else 
 
+    // if (!muon.globalTrack().isNull()){
+    //   reco::Track muonTrk = *(muon.globalTrack());
+
     if(!muon.track().isNull()){
       reco::Track muonTrk = *(muon.track());
       if(debugCOUT)
 	std::cout << "track  innerPosition() = " << muonTrk.innerPosition() << " innerMomentum() = " << muonTrk.innerMomentum()
-		  << " outerPosition() = " << muonTrk.outerPosition() << " outerMomentum() = " << muonTrk.outerMomentum() << std::endl;
+		  << " outerPosition() = " << muonTrk.outerPosition() << " outerMomentum() = " << muonTrk.outerMomentum() << " mCount = " << mCount << std::endl;
 
-      propagateTrack(iEvent, iSetup, muonTrk);
+      propagateTrack(iEvent, iSetup, muonTrk, mCount);
     }
   }
   
-
-  /*
-  for(auto ipos : xposOnlayer){
-    auto layer = ipos.first;   
-    unsigned int iSize = ipos.second.size();
-    for(unsigned int ij=0; ij<iSize; ++ij){
-      std::cout << "x = " << xposOnlayer[layer][ij] << " y = " << yposOnlayer[layer][ij] << " momentum = " << momOnlayer[layer][ij] << std::endl;
+  if(debugCOUT){
+  for(int iS=0; iS<2; ++iS){
+    for(auto ipos : xposOnlayer[iS]){
+      auto layer = ipos.first;   
+      unsigned int iSize = ipos.second.size();
+      for(unsigned int ij=0; ij<iSize; ++ij){
+	std::cout << " iS = " << iS << " layer = " << layer 
+		  << " x = " << xposOnlayer[iS][layer][ij] << " y = " << yposOnlayer[iS][layer][ij] 
+		  << " momentum = " << momOnlayer[iS][layer][ij] 
+		  << " muIdxOnlayer = " << muIdxOnlayer[iS][layer][ij] << " xCheck muon P = " << (*muons)[muIdxOnlayer[iS][layer][ij]].p() << std::endl;
+      }
     }
   }
-  */
+  }
+
+  if(crossM.size() == 0) return;
   
   /*
   float vx = 0.;
@@ -551,6 +637,11 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
 
 
     if(sectionType != 2) continue;
+    HGCScintillatorDetId sciId(hitid);
+    int rhiEta = sciId.ietaAbs();
+    int rhiPhi = sciId.iradiusphi().second;
+    int rhiR = sciId.iradiusphi().first;
+
 
     if(rhL < minL){
       minL = rhL;
@@ -560,7 +651,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     //    if((rhL - firstSciLayer) < 0 || (rhL - firstSciLayer) >= nSciLayers) continue;
     h2_occupancy[rhL - firstSciLayer]->Fill(rhX, rhY);
 
-    int iSide = rhZ > 0 ? 0 : 1;
+    int iSide = int(rhZ) > 0;
 
     minRvalues[rhL - firstSciLayer][iSide] = (minRvalues[rhL - firstSciLayer][iSide] == 0) ? rhR : std::min(rhR, minRvalues[rhL - firstSciLayer][iSide]);
     maxRvalues[rhL - firstSciLayer][iSide] = (maxRvalues[rhL - firstSciLayer][iSide] == 0) ? rhR : std::max(rhR, maxRvalues[rhL - firstSciLayer][iSide]);
@@ -585,6 +676,43 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     float MIP = energyMIP;
     float SoverN = energyMIP / sigmaNoiseMIP;
 
+    recHitX.push_back(rhX);
+    recHitY.push_back(rhY);
+    recHitZ.push_back(rhZ);
+    recHitiR.push_back(rhiR);
+    recHitiPhi.push_back(rhiPhi);
+    recHitiEta.push_back(rhiEta);
+    recHitL.push_back(rhL);
+    recHitEne.push_back(rhEnergy);
+    recHitMip.push_back(MIP);
+    recHitNoise.push_back(sigmaNoiseMIP);
+
+
+
+    // std::cout << " rh iS = " << iSide << " rhL = " << rhL << " rhX = " << rhX << " rhY = " << rhY << std::endl; 
+
+    //    std::cout << " xposOnlayer[rhL].size() = " << xposOnlayer[iSide][rhL- firstSciLayer].size() << " layer = " << rhL- firstSciLayer << std::endl;
+
+    if(debugCOUT){
+      int ic = -1;
+      for(auto icount : xposOnlayer[iSide][rhL- firstSciLayer]){
+	++ic;
+	// std::cout << " ic = " << ic << " rhL = " << rhL- firstSciLayer << " rhX = " << rhX << " icount = " << icount << std::endl;
+	// std::cout << " rhY = " << rhY << " icount = " << yposOnlayer[iSide][rhL- firstSciLayer][ic] << std::endl;
+	if(std::abs(icount - rhX) < 3.){
+	  if(std::abs(rhY - yposOnlayer[iSide][rhL- firstSciLayer][ic]) < 3.){
+	    energyDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], rhEnergy);
+	    MIPDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], MIP);
+	    SoNDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], SoverN);
+	    std::cout << " trovato layer = " << rhL- firstSciLayer << " energy = " << rhEnergy << " p = " << momOnlayer[iSide][rhL- firstSciLayer][ic]
+		      << " rhX = " << rhX << " trkX = " << icount << " rhY = " << rhY << " trkY = " <<  yposOnlayer[iSide][rhL- firstSciLayer][ic]  << std::endl;
+	  }
+	}
+      }
+    }
+
+
+
     if(debugCOUT)
       std::cout << " MIP = " << MIP << " charge =  " << charge << " SoN = " << SoverN << std::endl;
   }
@@ -601,11 +729,9 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     h_maxR->Fill(ij, maxRvalues[ij][0]);
     h_maxR->Fill(ij, maxRvalues[ij][1]);
   }
-  return;
 
-  
+  newT->Fill();
 
- 
   if(debugCOUT) std::cout<< " end of event process " << std::endl;
 }
 
@@ -619,16 +745,10 @@ void
 HGCalTimingAnalyzer::endJob()
 {
 
-  for(int ij=1; ij <= h_layersZ->GetNbinsX()+1; ++ij){
-    std::cout << " layer = " << ij << " Z = " << h_layersZ->GetBinContent(ij) << std::endl;
-  }
-  // for(int ij=1; ij<=nSciLayers; ++ij){
-  //   auto histo = (TH1F*) h_minR_pos->ProjectionX("histo", ij, ij+1);
-  //   std::cout << " h_minR_pos->GetBinCenter(ij+1) = " <<  h_minR_pos->GetXaxis()->GetBinCenter(ij) 
-  // 	      << " histo->GetMin() = " << histo->GetBinContent(histo->GetMinimumBin()) 
-  // 	      << " histo->GetMax() = " << histo->GetBinContent(histo->GetMaximumBin()) << std::endl;
-
+  // for(int ij=1; ij <= h_layersZ->GetNbinsX()+1; ++ij){
+  //   std::cout << " layer = " << ij << " Z = " << h_layersZ->GetBinContent(ij) << std::endl;
   // }
+
   std::cout << " totEvents = " << nEvents << " events good = " << nEventsGood << " fraction non interacting = " << 1.*nEventsGood/nEvents << std::endl;
 
 }
