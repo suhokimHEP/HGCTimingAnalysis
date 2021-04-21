@@ -128,9 +128,11 @@ private:
 
   std::vector<float> scaleCorrection;
   std::vector<float> weights;
+  float scaleCorrectionSci;
 
   float keV2GeV;
   float keV2MeV;
+  float GeV2MeV;
 
   double keV2fC[2];
   double keV2MIP;
@@ -174,14 +176,26 @@ private:
   TH2F* SoNDistr[nSciLayers];
   TProfile2D* h2_RvsL;
 
+  TH1F* nMuons_vsEta[nSciLayers];
+  TH1F* rMin_vsEta[nSciLayers];
+  TH1F* rMax_vsEta[nSciLayers];
+  TH1F* h_nEvents;
+
+  TH1F* h_etaMuon;
+  TH1F* h_ptMuon;
+
   std::map<int, std::vector<float>> xposOnlayer[2];
   std::map<int, std::vector<float>> yposOnlayer[2];
   std::map<int, std::vector<float>> momOnlayer[2];
+  std::map<int, std::vector<float>> momTOnlayer[2];
   std::map<int, std::vector<int>> muIdxOnlayer[2];
 
+  std::map<std::pair<int,int>, float> minR_Etabin;
+  std::map<std::pair<int,int>, float> maxR_Etabin;
 
   TTree* newT;
   std::vector<float> muonP;
+  std::vector<float> muonPt;
   std::vector<float> muonEta;
   std::vector<float> muonPhi;
   std::vector<float> crossX;
@@ -189,6 +203,8 @@ private:
   std::vector<float> crossZ;
   std::vector<float> crossL;
   std::vector<float> crossM;
+  std::vector<float> muonChi;
+  std::vector<short int> muonTrkQ;
   std::vector<float> recHitX;
   std::vector<float> recHitY;
   std::vector<float> recHitZ;
@@ -197,7 +213,7 @@ private:
   std::vector<int> recHitiEta;
   std::vector<int> recHitL;
   std::vector<float> recHitEne;
-  std::vector<int> recHitMip;
+  std::vector<float> recHitMip;
   std::vector<float> recHitNoise;
 
   bool debugCOUT;
@@ -257,6 +273,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   for( auto corr : rcorr ) {
     scaleCorrection.push_back(1.0/corr);
   }
+  scaleCorrectionSci = iConfig.getParameter<double>("sciThicknessCorrection");
 
   const auto& dweights = iConfig.getParameter<std::vector<double> >("dEdXweights");
   for( auto weight : dweights ) {
@@ -265,11 +282,13 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
 
   keV2GeV = 1e-6;
   keV2MeV = 1e-3;
+  GeV2MeV = 1.e3;
   //end param conversion
 
   edm::Service<TFileService> fs;
   newT = fs->make<TTree>("newT", "");
   newT->Branch("muonP", &muonP);
+  newT->Branch("muonPt", &muonPt);
   newT->Branch("muonEta", &muonEta);
   newT->Branch("muonPhi", &muonPhi);
   newT->Branch("crossX", &crossX);
@@ -277,6 +296,8 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   newT->Branch("crossZ", &crossZ);
   newT->Branch("crossL", &crossL);
   newT->Branch("crossM", &crossM);
+  newT->Branch("muonChi", &muonChi);
+  newT->Branch("muonTrkQ", &muonTrkQ);
   newT->Branch("recHitX", &recHitX);
   newT->Branch("recHitY", &recHitY);
   newT->Branch("recHitZ", &recHitZ);
@@ -302,12 +323,25 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   h_layersZ_neg = fs->make<TProfile>("h_layersZ_neg", "", 50., 0., 50.);
   h_layersZ = fs->make<TProfile>("h_layersZ", "", 50., 0., 50.);
 
+  h_nEvents = fs->make<TH1F>("h_nEvents", "", 5000, 0., 5000.);
+
+  h_etaMuon = fs->make<TH1F>("h_etaMuon", "", 500, -3., 3.);
+  h_ptMuon = fs->make<TH1F>("h_ptMuon", "", 100, 0., 100.);
 
   for(int ij=0; ij<nSciLayers; ++ij){
     h2_occupancy[ij] = fs->make<TH2F>(Form("h2_occupancy_L%d", ij+firstSciLayer), "", 600, -300., 300, 600, -300., 300.);
     energyDistr[ij] = fs->make<TH2F>(Form("energyDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
     MIPDistr[ij] = fs->make<TH2F>(Form("MIPDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
     SoNDistr[ij] = fs->make<TH2F>(Form("SoNDistr_L%d", ij+firstSciLayer), "", 100, 0., 100., 100., 0., 100.);
+    nMuons_vsEta[ij] = fs->make<TH1F>(Form("nMuons_vsEta_L%d", ij+firstSciLayer), "", 400, 0., 4.);
+    rMin_vsEta[ij] = fs->make<TH1F>(Form("rMin_vsEta_L%d", ij+firstSciLayer), "", 400, 0., 4.);
+    rMax_vsEta[ij] = fs->make<TH1F>(Form("rMax_vsEta_L%d", ij+firstSciLayer), "", 400, 0., 4.);
+
+    for(int iB=1; iB<400; ++iB){
+      std::pair<int, int> ref(ij, iB);
+      minR_Etabin[ref] = 999;
+      maxR_Etabin[ref] = 0.;
+    }
   }
   h2_RvsL = fs->make<TProfile2D>("h2_RvsL", "", 50, 0., 50., 300, 0., 300);
 
@@ -375,24 +409,31 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
   const Propagator &prop = (*propagator_);
 
   if(debugCOUT)
-  std::cout << " propagateTrack p = " << tk.p() << " pt = " << tk.pt() << " eta = " << tk.eta() << std::endl;
+    std::cout << " propagateTrack p = " << tk.p() << " pt = " << tk.pt() << " eta = " << tk.eta() << std::endl;
 
   FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
   int iSide = int(tk.eta() > 0);
+  bool goodTrk = false;
+  float chi = -1.;
+  signed short trakQuality = -1;
+
   for(int ij=0; ij<nSciLayers; ++ij){
     TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
 
     if (tsos.isValid()) {
+      goodTrk = true;
       auto position = tsos.globalPosition();
       math::XYZPoint pos(position.x(), position.y(), position.z()); 
       xposOnlayer[iSide][ij].push_back(pos.x());
       yposOnlayer[iSide][ij].push_back(pos.y());
       momOnlayer[iSide][ij].push_back(tk.p());
+      momTOnlayer[iSide][ij].push_back(tk.pt());
       muIdxOnlayer[iSide][ij].push_back(idx);
       if(debugCOUT)
 	std::cout << " valid layer = " << ij << " trkX = " << pos.x() << " ttrkY = " << pos.y() << std::endl;
 
       muonP.push_back(tk.p());
+      muonPt.push_back(tk.pt());
       muonEta.push_back(tk.eta());
       muonPhi.push_back(tk.phi());
       crossX.push_back(pos.x());
@@ -400,7 +441,54 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       crossZ.push_back(pos.z());
       crossL.push_back(ij+firstSciLayer);
       crossM.push_back(idx);
+
+      //      nMuons_vsEta[ij]->Fill(tk.eta());
+      //
+      float trkR = sqrt(pos.x()*pos.x() + pos.y()*pos.y());
+      //      std::cout << " eta = " << tk.eta() << " R = " << trkR << " computed = " << pos.z()/sinh(tk.eta()) << std::endl;
+
+      float trkEta = asinh(pos.z()/trkR);
+      nMuons_vsEta[ij]->Fill(std::abs(trkEta));
+
+      int etaBin = nMuons_vsEta[ij]->FindBin(std::abs(trkEta));
+      //      if(tk.eta() < 0)  std::cout << "trkEta = " << trkEta << " tk.eta()  = " << tk.eta() << std::endl;
+      std::pair<int,int> refC(ij, etaBin);
+      if(trkR < minR_Etabin[refC]) minR_Etabin[refC] = trkR;
+      if(trkR > maxR_Etabin[refC]) maxR_Etabin[refC] = trkR;
     }
+
+
+    if(goodTrk && chi == -1 && trakQuality == -1){
+      chi = tk.normalizedChi2();
+
+      reco::TrackBase::TrackQuality trackQualityUndef = reco::TrackBase::qualityByName("undefQuality");
+      reco::TrackBase::TrackQuality trackQualityLoose = reco::TrackBase::qualityByName("loose");
+      reco::TrackBase::TrackQuality trackQualityTight = reco::TrackBase::qualityByName("tight");
+      reco::TrackBase::TrackQuality trackQualityhighPur = reco::TrackBase::qualityByName("highPurity");
+      reco::TrackBase::TrackQuality trackQualityConfirmed = reco::TrackBase::qualityByName("confirmed");
+      reco::TrackBase::TrackQuality trackQualityGoodIterative = reco::TrackBase::qualityByName("goodIterative");
+
+
+      if (tk.quality(trackQualityUndef))
+	trakQuality = 5;
+      if (tk.quality(trackQualityLoose))
+	trakQuality = 0;
+      if (tk.quality(trackQualityTight))
+	trakQuality = 1;
+      if (tk.quality(trackQualityhighPur))
+	trakQuality = 2;
+      if (tk.quality(trackQualityConfirmed))
+	trakQuality = 3;
+      if (tk.quality(trackQualityGoodIterative))
+	trakQuality = 4;
+      
+      if(debugCOUT)
+	std::cout << " trakQuality = " << trakQuality << " chi = " << chi << std::endl;
+    }
+
+    muonChi.push_back(chi);
+    muonTrkQ.push_back(trakQuality);
+
   }
 }
 
@@ -410,10 +498,11 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
 {
 
   ++nEvents;
-  //if(nEvents != 14) return;
+  //  if(nEvents != 9) return;
   // if(nEvents == 383) debugCOUT4 = true;
   if(debugCOUT) std::cout<< " >>> analyzer evt = " << nEvents << std::endl;
   using namespace edm;
+
 
   for(int ij=0; ij<2; ++ij){
     xposOnlayer[ij].clear();
@@ -421,9 +510,11 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     momOnlayer[ij].clear();
     muIdxOnlayer[ij].clear();
   }
+
   recHitTools.getEventSetup(iSetup);
 
   muonP.clear();
+  muonPt.clear();
   muonEta.clear();
   muonPhi.clear();
   crossX.clear();
@@ -431,6 +522,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   crossZ.clear();
   crossL.clear();
   crossM.clear();
+  muonChi.clear();
+  muonTrkQ.clear();
   recHitX.clear();
   recHitY.clear();
   recHitZ.clear();
@@ -476,8 +569,18 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   //  for(const pat::Muon & muon : *muons){
   for(const reco::Muon & muon : *muons){
     ++mCount;
+
+    //    if(std::abs(muon.eta()) < 2.3) continue;
+    
     if (debugCOUT) std::cout << " recoMu = " << muon.p() << " " << muon.eta() << " " << muon.phi() << " isGlobal = " << muon.isGlobalMuon() << std::endl;
     if(!muon.isGlobalMuon() ) continue;
+
+    if(muon.pt() < 4. || muon.p() > 200. ) continue;
+
+
+    h_etaMuon->Fill(muon.eta());
+    h_ptMuon->Fill(muon.pt());
+
     //if(std::abs(muon.eta()) < 1.7 || std::abs(muon.eta()) > 2.8) continue;
 
     // if (!muon.combinedMuon().isNull()){
@@ -513,6 +616,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     }
   }
   
+  /*
   if(debugCOUT){
   for(int iS=0; iS<2; ++iS){
     for(auto ipos : xposOnlayer[iS]){
@@ -527,6 +631,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     }
   }
   }
+  */
 
   if(crossM.size() == 0) return;
   
@@ -639,9 +744,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     if(sectionType != 2) continue;
     HGCScintillatorDetId sciId(hitid);
     int rhiEta = sciId.ietaAbs();
-    int rhiPhi = sciId.iradiusphi().second;
-    int rhiR = sciId.iradiusphi().first;
-
+    int rhiPhi = sciId.iphi();
+    int rhiR = sciId.iradius();
 
     if(rhL < minL){
       minL = rhL;
@@ -660,8 +764,9 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
       std::cout << " thick = " << thick << " sectionType = " << sectionType 
 		<< " rhL = " << rhL << " rhX = " << rhX << " rhY = " << rhY << " rhZ = " << rhZ << std::endl;
 
-    int energyMIP = 0.;
-    if(sectionType == 2) energyMIP = hit->energy()/keV2GeV * keV2MIP;
+    float energyMIP = 0.;
+    //    if(sectionType == 2) energyMIP = hit->energy()/keV2GeV * keV2MIP;
+    if(sectionType == 2) energyMIP = hit->energy() * GeV2MeV / scaleCorrectionSci / weights.at(layer);
     else if(sectionType == 0 || sectionType == 1) energyMIP = hit->energy()/scaleCorrection.at(thick)/keV2GeV / (weights.at(layer)/keV2MeV);
 
     float energyCharge = 0.;
@@ -669,12 +774,14 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     else if(sectionType == 0 || sectionType == 1) energyCharge = energyMIP * fCPerMIP[thick];
 
     double sigmaNoiseMIP = 1.;
-    if(sectionType == 2) sigmaNoiseMIP = noiseMIP;
+    if(sectionType == 2) sigmaNoiseMIP = (noiseMIP * scaleCorrectionSci * weights.at(layer) / GeV2MeV);
     else if(sectionType == 0 || sectionType == 1) sigmaNoiseMIP = noisefC[thick]/fCPerMIP[thick];
 
     float charge = energyCharge;
     float MIP = energyMIP;
     float SoverN = energyMIP / sigmaNoiseMIP;
+
+    //    std::cout << " MIP = " << MIP << std::endl;
 
     recHitX.push_back(rhX);
     recHitY.push_back(rhY);
@@ -699,13 +806,14 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
 	++ic;
 	// std::cout << " ic = " << ic << " rhL = " << rhL- firstSciLayer << " rhX = " << rhX << " icount = " << icount << std::endl;
 	// std::cout << " rhY = " << rhY << " icount = " << yposOnlayer[iSide][rhL- firstSciLayer][ic] << std::endl;
-	if(std::abs(icount - rhX) < 3.){
-	  if(std::abs(rhY - yposOnlayer[iSide][rhL- firstSciLayer][ic]) < 3.){
+	if(std::abs(icount - rhX) < 4.){
+	  if(std::abs(rhY - yposOnlayer[iSide][rhL- firstSciLayer][ic]) < 4.){
 	    energyDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], rhEnergy);
 	    MIPDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], MIP);
 	    SoNDistr[rhL - firstSciLayer]->Fill(momOnlayer[iSide][rhL- firstSciLayer][ic], SoverN);
 	    std::cout << " trovato layer = " << rhL- firstSciLayer << " energy = " << rhEnergy << " p = " << momOnlayer[iSide][rhL- firstSciLayer][ic]
-		      << " rhX = " << rhX << " trkX = " << icount << " rhY = " << rhY << " trkY = " <<  yposOnlayer[iSide][rhL- firstSciLayer][ic]  << std::endl;
+		      << " rhX = " << rhX << " trkX = " << icount << " rhY = " << rhY << " trkY = " <<  yposOnlayer[iSide][rhL- firstSciLayer][ic] 
+		      << " MIP = " << MIP << std::endl;
 	  }
 	}
       }
@@ -744,6 +852,15 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
 void
 HGCalTimingAnalyzer::endJob()
 {
+  for(int ij=0; ij<nSciLayers; ++ij){
+    for(int iB=1; iB<400; ++iB){
+      std::pair<int, int> ref(ij, iB);
+      rMin_vsEta[ij]->SetBinContent(iB, minR_Etabin[ref]);
+      rMax_vsEta[ij]->SetBinContent(iB, maxR_Etabin[ref]);
+    }
+  }
+
+  h_nEvents->Fill(nEvents);
 
   // for(int ij=1; ij <= h_layersZ->GetNbinsX()+1; ++ij){
   //   std::cout << " layer = " << ij << " Z = " << h_layersZ->GetBinContent(ij) << std::endl;

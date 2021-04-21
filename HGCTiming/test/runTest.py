@@ -14,22 +14,18 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.maxEvents = cms.untracked.PSet( 
     input = cms.untracked.int32(-1) 
 )
-
-
-#import FWCore.Utilities.FileUtils as FileUtils
-#readFiles = cms.untracked.vstring()
-#readFiles.extend(FileUtils.loadListFromFile ('INPUTFILELIST') )
+import FWCore.Utilities.FileUtils as FileUtils
+readFiles = cms.untracked.vstring()
+readFiles.extend(FileUtils.loadListFromFile ('QCDlist_200PU.txt') )
 
 
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
-                            #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/NoPU_111X_mcRun4_realistic_T15_v1-v1/100000/66CDE37C-EE86-0A48-BC19-063DDD5BC953.root'),
-                            #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/PU140_withNewMB_111X_mcRun4_realistic_T15_v1_ext1-v2/240000/FFFA8ACB-60E3-A943-B815-DF8491F45BFB.root'),
-                            #fileNames = cms.untracked.vstring('file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/NoPU_castor_all_pt_tracks_111X_mcRun4_realistic_T15_v1-v1/100000/01307FF4-AB5E-FE49-BA98-5D1D4A60A59F.root'),
+
                             fileNames = cms.untracked.vstring(
-                                'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/100000/670193A7-6401-A946-94BC-CFE3ECFC981E.root', 
-                                #'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/120000/0116EABC-7FED-E545-B3F5-7D2A7E64699E.root'
-                                #'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/QCD_Pt-15to3000_TuneCP5_Flat_14TeV-pythia8/FEVT/PU140_castor_111X_mcRun4_realistic_T15_v1-v1/120000/01463429-3B47-C54A-BD15-BC5DAAE5D83B.root'
+#'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/PU140_withNewMB_111X_mcRun4_realistic_T15_v1_ext1-v2/240000/FFF26B65-7EFD-CF4D-8032-151F07016907.root'
+                            'file:./genMuon/step3.root'
+
                             ),
                             #fileNames = readFiles,
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
@@ -61,6 +57,7 @@ process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              caloClusterInput = cms.InputTag('hgcalLayerClusters'),
                              dEdXweights = HGCalTimeEstimator.dEdXweights,
                              thicknessCorrection = HGCalTimeEstimator.thicknessCorrection,
+                             sciThicknessCorrection = HGCalTimeEstimator.sciThicknessCorrection,
                              HGCEE_fCPerMIP = HGCalTimeEstimator.HGCEE_fCPerMIP,
                              HGCEE_noisefC = HGCalTimeEstimator.HGCEE_noisefC,
                              HGCEF_noisefC = HGCalTimeEstimator.HGCEF_noisefC,
@@ -73,6 +70,7 @@ process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("file:testMinBias.root")
+                                   #fileName = cms.string("file:MinBias140PU_0.root")
+                                   fileName = cms.string("file:singleMuon_newGun.root")
                                    )
 process.p = cms.Path(process.ana)

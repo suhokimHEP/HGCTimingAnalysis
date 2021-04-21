@@ -1,26 +1,28 @@
 import FWCore.ParameterSet.Config as cms
-from Configuration.StandardSequences.Eras import eras
+from Configuration.Eras.Era_Phase2C9_cff import Phase2C9
+process = cms.Process('Demo',Phase2C9)
 
-process = cms.Process("Demo")
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D41Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2026D49Reco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 
-import FWCore.Utilities.FileUtils as FileUtils
-readFiles = cms.untracked.vstring()
-readFiles.extend(FileUtils.loadListFromFile ('INPUTFILELIST') )
+#import FWCore.Utilities.FileUtils as FileUtils
+#readFiles = cms.untracked.vstring()
+#readFiles.extend(FileUtils.loadListFromFile ('INPUTFILELIST') )
 
 
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
-                            fileNames = readFiles,
+                            #fileNames = readFiles,
+                            fileNames = cms.untracked.vstring(DUMMYINPUTFILELIST),
                             duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
                             inputCommands=cms.untracked.vstring('keep *',
                                                   #'drop EcalEBTriggerPrimitiveDigisSorted_simEcalEBTriggerPrimitiveDigis_*_HLT',
@@ -32,14 +34,16 @@ process.source = cms.Source("PoolSource",
                                                   )
                             )
         
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, '110X_mcRun4_realistic_v3', '')
 
 from HGCTimingAnalysis.HGCTiming.timeRecHitEstimator_cfi import HGCalTimeEstimator
 
 process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              detector = cms.string("all"),
                              rawRecHits = cms.bool(True),                              
-                             particleGENPT = cms.double(PGENPT),
-                             CaloPartPDGID = cms.int32(CALOPARTPDGID),
+                             particleGENPT = cms.double(5),
+                             CaloPartPDGID = cms.int32(22),
                              timeOffset = HGCalTimeEstimator.timeOFFSET,
                              HGCEEInput = cms.InputTag('HGCalRecHit:HGCEERecHits'),
                              HGCFHInput = cms.InputTag('HGCalRecHit:HGCHEFRecHits'),
@@ -47,6 +51,7 @@ process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              caloClusterInput = cms.InputTag('hgcalLayerClusters'),
                              dEdXweights = HGCalTimeEstimator.dEdXweights,
                              thicknessCorrection = HGCalTimeEstimator.thicknessCorrection,
+                             sciThicknessCorrection = HGCalTimeEstimator.sciThicknessCorrection,
                              HGCEE_fCPerMIP = HGCalTimeEstimator.HGCEE_fCPerMIP,
                              HGCEE_noisefC = HGCalTimeEstimator.HGCEE_noisefC,
                              HGCEF_noisefC = HGCalTimeEstimator.HGCEF_noisefC,
@@ -59,6 +64,6 @@ process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
                              )
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string("file:OUTFILE.root")
+                                   fileName = cms.string("DUMMYOUTFILENAME")
                                    )
 process.p = cms.Path(process.ana)
