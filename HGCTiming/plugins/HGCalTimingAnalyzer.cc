@@ -105,10 +105,13 @@ private:
   inline static const std::string detectorName_ = "HGCalEESensitive";
   inline static const std::string propName_ = "PropagatorWithMaterial";
   edm::ESHandle<MagneticField> bfield_;
+  // const HGCalGeometry* geom_;
+  // inline static const std::string detectorSciName_ = "HGCalHEScintillatorSensitive";
   edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hdc_token_;
   edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bfield_token_;
   edm::ESGetToken<Propagator, TrackingComponentsRecord> propagator_token_;
   edm::ESHandle<Propagator> propagator_;
+  //  const edm::ESGetToken<HGCalGeometry, IdealGeometryRecord> geomToken_;
   //  const Propagator& prop
 
   std::string                detector;
@@ -208,6 +211,7 @@ private:
   std::vector<float> recHitX;
   std::vector<float> recHitY;
   std::vector<float> recHitZ;
+  std::vector<int> recHitSize;
   std::vector<int> recHitiR;
   std::vector<int> recHitiPhi;
   std::vector<int> recHitiEta;
@@ -222,6 +226,7 @@ private:
 
 
 HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
+  //  geomToken_{esConsumes<HGCalGeometry, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"", detectorSciName_})} {},
   detector(iConfig.getParameter<std::string >("detector")),
   rawRecHits(iConfig.getParameter<bool>("rawRecHits")),
   particleGenPt(iConfig.getParameter<double>("particleGENPT")),
@@ -255,6 +260,8 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   bfield_token_ = sumes.esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>();
   propagator_token_ = sumes.esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_));
   //propagator_token_ = sumes.esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", propName_));
+  //  geomToken_ = sumes.esConsumes<HGCalGeometry, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"", detectorSciName_}){};
+
 
   //parameters to provide conversion GeV - MIP
   keV2fC[0] =  iConfig.getParameter<double>("HGCEE_keV2fC");
@@ -301,6 +308,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   newT->Branch("recHitX", &recHitX);
   newT->Branch("recHitY", &recHitY);
   newT->Branch("recHitZ", &recHitZ);
+  newT->Branch("recHitSize", &recHitSize);
   newT->Branch("recHitiR", &recHitiR);
   newT->Branch("recHitiPhi", &recHitiPhi);
   newT->Branch("recHitiEta", &recHitiEta);
@@ -375,6 +383,10 @@ void HGCalTimingAnalyzer::beginRun(edm::Run const& iEvent, edm::EventSetup const
 
 
 void HGCalTimingAnalyzer::initialize(const edm::EventSetup &es) {
+  // const auto& geomR = es.getData(geomToken_);
+  // geom_ = &geomR;
+
+
   edm::ESHandle<HGCalDDDConstants> hdc = es.getHandle(hdc_token_);
   hgcons_ = hdc.product();
   
@@ -485,10 +497,10 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       if(debugCOUT)
 	std::cout << " trakQuality = " << trakQuality << " chi = " << chi << std::endl;
     }
-
-    muonChi.push_back(chi);
-    muonTrkQ.push_back(trakQuality);
-
+    if(goodTrk){
+      muonChi.push_back(chi);
+      muonTrkQ.push_back(trakQuality);
+    }
   }
 }
 
@@ -527,6 +539,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   recHitX.clear();
   recHitY.clear();
   recHitZ.clear();
+  recHitSize.clear();
   recHitiR.clear();
   recHitiPhi.clear();
   recHitiEta.clear();
@@ -534,7 +547,6 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   recHitEne.clear();
   recHitMip.clear();
   recHitNoise.clear();
-  
 
   Handle<HGCRecHitCollection> recHitHandleEE;
   Handle<HGCRecHitCollection> recHitHandleFH;
@@ -746,6 +758,9 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     int rhiEta = sciId.ietaAbs();
     int rhiPhi = sciId.iphi();
     int rhiR = sciId.iradius();
+    //    float rhSize = geom_->getArea(sciId);
+    float rhSize = 1.;
+    std::cout << " area = " << rhSize << std::endl;
 
     if(rhL < minL){
       minL = rhL;
@@ -786,6 +801,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     recHitX.push_back(rhX);
     recHitY.push_back(rhY);
     recHitZ.push_back(rhZ);
+    recHitSize.push_back(rhSize);
     recHitiR.push_back(rhiR);
     recHitiPhi.push_back(rhiPhi);
     recHitiEta.push_back(rhiEta);
