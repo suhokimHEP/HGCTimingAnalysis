@@ -1,5 +1,6 @@
 // user include files
 
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -17,7 +18,8 @@
 #include "Geometry/HGCalCommonData/interface/HGCalDDDConstants.h"
 #include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
-
+#include "Geometry/Records/interface/IdealGeometryRecord.h"
+//#include "Geometry/HGCalCommonData/interface/HGCalGeometryMode.h"
 #include "DataFormats/CaloRecHit/interface/CaloClusterFwd.h"
 #include "DataFormats/ForwardDetId/interface/HGCEEDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCHEDetId.h"
@@ -74,7 +76,6 @@ public:
   explicit HGCalTimingAnalyzer(const edm::ParameterSet&);
   ~HGCalTimingAnalyzer();
   
-
   void initialize(const edm::EventSetup &es);
   void buildLayers();
   void propagateTrack(const edm::Event &ev, const edm::EventSetup &es, const reco::Track &tk, int idx);
@@ -105,15 +106,13 @@ private:
   inline static const std::string detectorName_ = "HGCalEESensitive";
   inline static const std::string propName_ = "PropagatorWithMaterial";
   edm::ESHandle<MagneticField> bfield_;
-  // const HGCalGeometry* geom_;
-  // inline static const std::string detectorSciName_ = "HGCalHEScintillatorSensitive";
+  const HGCalGeometry* geom_;
   edm::ESGetToken<HGCalDDDConstants, IdealGeometryRecord> hdc_token_;
   edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bfield_token_;
   edm::ESGetToken<Propagator, TrackingComponentsRecord> propagator_token_;
   edm::ESHandle<Propagator> propagator_;
-  //  const edm::ESGetToken<HGCalGeometry, IdealGeometryRecord> geomToken_;
-  //  const Propagator& prop
 
+  const edm::ESGetToken<HGCalGeometry, IdealGeometryRecord> geomToken_;
   std::string                detector;
   int                        algo;
   HGCalDepthPreClusterer     pre;
@@ -121,9 +120,8 @@ private:
   float                      particleGenPt;
   int                        CaloPartPDGID;
   float                      timeOffset;
+
   hgcal::RecHitTools         recHitTools;
-
-
 
   std::vector<int> layersToSkip;
 
@@ -226,7 +224,7 @@ private:
 
 
 HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
-  //  geomToken_{esConsumes<HGCalGeometry, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"", detectorSciName_})} {},
+  geomToken_{esConsumes<HGCalGeometry, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"",iConfig.getParameter<std::string>("detectorSciName")})},
   detector(iConfig.getParameter<std::string >("detector")),
   rawRecHits(iConfig.getParameter<bool>("rawRecHits")),
   particleGenPt(iConfig.getParameter<double>("particleGENPT")),
@@ -243,7 +241,6 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   auto sumes = consumesCollector();
   clusterTools = std::make_unique<hgcal::ClusterTools>(iConfig,sumes);
 
-
   if(detector=="all") {
     _recHitsEE = consumes<HGCRecHitCollection>(iConfig.getParameter<edm::InputTag>("HGCEEInput"));
     _recHitsFH = consumes<HGCRecHitCollection>(iConfig.getParameter<edm::InputTag>("HGCFHInput"));
@@ -259,9 +256,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   hdc_token_ = sumes.esConsumes<HGCalDDDConstants, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag("", detectorName_));
   bfield_token_ = sumes.esConsumes<MagneticField, IdealMagneticFieldRecord, edm::Transition::BeginRun>();
   propagator_token_ = sumes.esConsumes<Propagator, TrackingComponentsRecord, edm::Transition::BeginRun>(edm::ESInputTag("", propName_));
-  //propagator_token_ = sumes.esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", propName_));
-  //  geomToken_ = sumes.esConsumes<HGCalGeometry, IdealGeometryRecord, edm::Transition::BeginRun>(edm::ESInputTag{"", detectorSciName_}){};
-
+  //  geomToken_ = sumes.esConsumes<HGCalGeometry, IdealGeometryRecord>(edm::ESInputTag{"",iConfig.getParameter<std::string>("detectorSciName")});
 
   //parameters to provide conversion GeV - MIP
   keV2fC[0] =  iConfig.getParameter<double>("HGCEE_keV2fC");
@@ -383,12 +378,16 @@ void HGCalTimingAnalyzer::beginRun(edm::Run const& iEvent, edm::EventSetup const
 
 
 void HGCalTimingAnalyzer::initialize(const edm::EventSetup &es) {
-  // const auto& geomR = es.getData(geomToken_);
-  // geom_ = &geomR;
+  const auto& geomR = es.getData(geomToken_);
+  geom_ = &geomR;
+
+  edm::ESHandle<CaloGeometry> geom;
+  es.get<CaloGeometryRecord>().get(geom);
+  recHitTools.setGeometry(*geom);
 
 
-  edm::ESHandle<HGCalDDDConstants> hdc = es.getHandle(hdc_token_);
-  hgcons_ = hdc.product();
+  // edm::ESHandle<HGCalDDDConstants> hdc = es.getHandle(hdc_token_);
+  // hgcons_ = hdc.product();
   
   buildLayers();
 
@@ -522,8 +521,6 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     momOnlayer[ij].clear();
     muIdxOnlayer[ij].clear();
   }
-
-  recHitTools.getEventSetup(iSetup);
 
   muonP.clear();
   muonPt.clear();
@@ -721,16 +718,11 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     const HGCalDetId hitid = iop->first;
     const HGCRecHit* hit = iop->second;
 
-    bool found = false;
     float rhEnergy = hit->energy();
-    float rhTime = hit->time() - timeOffset;
-    float CPfraction = 0.;
     float rhX = recHitTools.getPosition(hitid).x();
     float rhY = recHitTools.getPosition(hitid).y();
     float rhZ = recHitTools.getPosition(hitid).z();
     int rhL = recHitTools.getLayerWithOffset(hitid);
-    float rhEta = recHitTools.getEta(recHitTools.getPosition(hitid));
-    float rhPt = rhEnergy/cosh(rhEta);
 
     //to extract some conversion factors 
     unsigned int layer = recHitTools.getLayerWithOffset(hitid);
@@ -758,9 +750,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     int rhiEta = sciId.ietaAbs();
     int rhiPhi = sciId.iphi();
     int rhiR = sciId.iradius();
-    //    float rhSize = geom_->getArea(sciId);
-    float rhSize = 1.;
-    std::cout << " area = " << rhSize << std::endl;
+    float rhSize = geom_->getArea(sciId);
+    //    std::cout << " area = " << rhSize << std::endl;
 
     if(rhL < minL){
       minL = rhL;

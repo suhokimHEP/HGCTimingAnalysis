@@ -14,17 +14,17 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.maxEvents = cms.untracked.PSet( 
     input = cms.untracked.int32(-1) 
 )
-import FWCore.Utilities.FileUtils as FileUtils
-readFiles = cms.untracked.vstring()
-readFiles.extend(FileUtils.loadListFromFile ('QCDlist_200PU.txt') )
+#import FWCore.Utilities.FileUtils as FileUtils
+#readFiles = cms.untracked.vstring()
+#readFiles.extend(FileUtils.loadListFromFile ('QCDlist_200PU.txt') )
 
 
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
 
                             fileNames = cms.untracked.vstring(
-#'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/PU140_withNewMB_111X_mcRun4_realistic_T15_v1_ext1-v2/240000/FFF26B65-7EFD-CF4D-8032-151F07016907.root'
-                            'file:./genMuon/step3.root'
+'file:/eos/cms/store/mc/Phase2HLTTDRSummer20ReRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/FEVT/PU140_withNewMB_111X_mcRun4_realistic_T15_v1_ext1-v2/240000/FFF26B65-7EFD-CF4D-8032-151F07016907.root'
+                                #'file:./genMuon/step3.root'
 
                             ),
                             #fileNames = readFiles,
@@ -41,11 +41,14 @@ process.source = cms.Source("PoolSource",
         
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '110X_mcRun4_realistic_v3', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, '110X_mcRun4_realistic_v3', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic_T15', '')
+
 
 from HGCTimingAnalysis.HGCTiming.timeRecHitEstimator_cfi import HGCalTimeEstimator
 
 process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
+                             detectorSciName = cms.string("HGCalHEScintillatorSensitive"), 
                              detector = cms.string("all"),
                              rawRecHits = cms.bool(True),                              
                              particleGENPT = cms.double(5),

@@ -1,15 +1,15 @@
 import FWCore.ParameterSet.Config as cms
 
 
-from RecoLocalCalo.HGCalRecProducers.HGCalRecHit_cfi import dEdX_weights_v10, HGCalRecHit
-from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import fCPerMIP_v9 ##same as v10 - 13/01/2020
+from RecoLocalCalo.HGCalRecProducers.HGCalRecHit_cfi import dEdX, HGCalRecHit
+from RecoLocalCalo.HGCalRecProducers.HGCalUncalibRecHit_cfi import fCPerMIP_v10 ##same as v10 - 13/01/2020
 from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import HGCAL_noise_fC, HGCAL_noise_heback, hgceeDigitizer, hgchefrontDigitizer, hgchebackDigitizer, nonAgedNoises, endOfLifeNoises
 
 HGCalTimeEstimator = cms.PSet(
-    dEdXweights = cms.vdouble(dEdX_weights_v10),
+    dEdXweights = dEdX.weights,
     thicknessCorrection = cms.vdouble(0.781,0.775,0.769), #from  HGCalRecHit.thicknessCorrection v10
     sciThicknessCorrection = cms.double(0.9), #from  HGCalRecHit.thicknessCorrection v10
-    HGCEE_fCPerMIP = cms.vdouble(fCPerMIP_v9),
+    HGCEE_fCPerMIP = cms.vdouble(fCPerMIP_v10),
     
     timeOFFSET = hgceeDigitizer.tofDelay,
 

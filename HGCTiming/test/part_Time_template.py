@@ -35,11 +35,12 @@ process.source = cms.Source("PoolSource",
                             )
         
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '110X_mcRun4_realistic_v3', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic_T15', '')
 
 from HGCTimingAnalysis.HGCTiming.timeRecHitEstimator_cfi import HGCalTimeEstimator
 
 process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
+                             detectorSciName = cms.string("HGCalHEScintillatorSensitive"),
                              detector = cms.string("all"),
                              rawRecHits = cms.bool(True),                              
                              particleGENPT = cms.double(5),
