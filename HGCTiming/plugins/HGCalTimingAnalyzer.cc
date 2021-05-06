@@ -28,6 +28,7 @@
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/TrajectorySeed/interface/PropagationDirection.h"
@@ -111,6 +112,7 @@ private:
   edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bfield_token_;
   edm::ESGetToken<Propagator, TrackingComponentsRecord> propagator_token_;
   edm::ESHandle<Propagator> propagator_;
+  //  inline const PropagationDirection dir = oppositeToMomentum;
 
   const edm::ESGetToken<HGCalGeometry, IdealGeometryRecord> geomToken_;
   std::string                detector;
@@ -183,6 +185,8 @@ private:
   TH1F* h_nEvents;
 
   TH1F* h_etaMuon;
+  TH1F* h_etaMuon_trkTrk;
+  TH1F* h_etaMuon_glbTrk;
   TH1F* h_ptMuon;
 
   std::map<int, std::vector<float>> xposOnlayer[2];
@@ -195,6 +199,7 @@ private:
   std::map<std::pair<int,int>, float> maxR_Etabin;
 
   TTree* newT;
+  //  std::vector<int> muonIdx;
   std::vector<float> muonP;
   std::vector<float> muonPt;
   std::vector<float> muonEta;
@@ -209,7 +214,7 @@ private:
   std::vector<float> recHitX;
   std::vector<float> recHitY;
   std::vector<float> recHitZ;
-  std::vector<int> recHitSize;
+  std::vector<float> recHitSize;
   std::vector<int> recHitiR;
   std::vector<int> recHitiPhi;
   std::vector<int> recHitiEta;
@@ -289,6 +294,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
 
   edm::Service<TFileService> fs;
   newT = fs->make<TTree>("newT", "");
+  //  newT->Branch("muon", &muonIdx);
   newT->Branch("muonP", &muonP);
   newT->Branch("muonPt", &muonPt);
   newT->Branch("muonEta", &muonEta);
@@ -329,6 +335,8 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   h_nEvents = fs->make<TH1F>("h_nEvents", "", 5000, 0., 5000.);
 
   h_etaMuon = fs->make<TH1F>("h_etaMuon", "", 500, -3., 3.);
+  h_etaMuon_trkTrk = fs->make<TH1F>("h_etaMuon_trkTrk", "", 500, -3., 3.);
+  h_etaMuon_glbTrk = fs->make<TH1F>("h_etaMuon_glbTrk", "", 500, -3., 3.);
   h_ptMuon = fs->make<TH1F>("h_ptMuon", "", 100, 0., 100.);
 
   for(int ij=0; ij<nSciLayers; ++ij){
@@ -418,17 +426,21 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
 					 const edm::EventSetup &es, const reco::Track& tk, int idx){
   auto bFieldProd = bfield_.product();
   const Propagator &prop = (*propagator_);
+  // auto prop = propp.clone();
+  // prop->setPropagationDirection(oppositeToMomentum);
 
   if(debugCOUT)
     std::cout << " propagateTrack p = " << tk.p() << " pt = " << tk.pt() << " eta = " << tk.eta() << std::endl;
 
-  FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
+  //  FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
+  FreeTrajectoryState fts = trajectoryStateTransform::innerFreeState((tk), bFieldProd);
   int iSide = int(tk.eta() > 0);
   bool goodTrk = false;
   float chi = -1.;
   signed short trakQuality = -1;
 
   for(int ij=0; ij<nSciLayers; ++ij){
+  //for(int ij=nSciLayers-1; ij<=0; --ij){
     TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
 
     if (tsos.isValid()) {
@@ -441,7 +453,7 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       momTOnlayer[iSide][ij].push_back(tk.pt());
       muIdxOnlayer[iSide][ij].push_back(idx);
       if(debugCOUT)
-	std::cout << " valid layer = " << ij << " trkX = " << pos.x() << " ttrkY = " << pos.y() << std::endl;
+	std::cout << " valid layer = " << ij << " trkX = " << pos.x() << " ttrkY = " << pos.y() << " trkEta = " << tk.eta() << std::endl;
 
       muonP.push_back(tk.p());
       muonPt.push_back(tk.pt());
@@ -456,10 +468,9 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       //      nMuons_vsEta[ij]->Fill(tk.eta());
       //
       float trkR = sqrt(pos.x()*pos.x() + pos.y()*pos.y());
-      //      std::cout << " eta = " << tk.eta() << " R = " << trkR << " computed = " << pos.z()/sinh(tk.eta()) << std::endl;
-
       float trkEta = asinh(pos.z()/trkR);
       nMuons_vsEta[ij]->Fill(std::abs(trkEta));
+      if(debugCOUT) std::cout << " eta = " << tk.eta() << " R = " << trkR << " trkEta = " << trkEta << std::endl;
 
       int etaBin = nMuons_vsEta[ij]->FindBin(std::abs(trkEta));
       //      if(tk.eta() < 0)  std::cout << "trkEta = " << trkEta << " tk.eta()  = " << tk.eta() << std::endl;
@@ -583,6 +594,13 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     
     if (debugCOUT) std::cout << " recoMu = " << muon.p() << " " << muon.eta() << " " << muon.phi() << " isGlobal = " << muon.isGlobalMuon() << std::endl;
     if(!muon.isGlobalMuon() ) continue;
+    if(!muon::isGoodMuon(muon, muon::GlobalMuonPromptTight)) continue;
+    //    else std::cout << " bad Muon " << std::endl;
+
+    // float absMuonZ = std::abs(muon.z());
+    // float muonR = muon.z();
+    // if( (absMuonZ > 600 && absMuonZ < 650 && muonR < 300) ||
+    // 	(absMuonZ > 680 && absMuonZ < 730 && muonR < 480) ) { std::cout << " simil fake " << std::endl;}
 
     if(muon.pt() < 4. || muon.p() > 200. ) continue;
 
@@ -612,14 +630,21 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     // }
     // else 
 
-    // if (!muon.globalTrack().isNull()){
-    //   reco::Track muonTrk = *(muon.globalTrack());
 
     if(!muon.track().isNull()){
       reco::Track muonTrk = *(muon.track());
+      h_etaMuon_trkTrk->Fill(muonTrk.eta());
+    }
+
+      //      std::cout << " ci sono " << std::endl; 
+    if (!muon.globalTrack().isNull()){
+      reco::Track muonTrk = *(muon.globalTrack());
+      h_etaMuon_glbTrk->Fill(muonTrk.eta());
+      
       if(debugCOUT)
 	std::cout << "track  innerPosition() = " << muonTrk.innerPosition() << " innerMomentum() = " << muonTrk.innerMomentum()
 		  << " outerPosition() = " << muonTrk.outerPosition() << " outerMomentum() = " << muonTrk.outerMomentum() << " mCount = " << mCount << std::endl;
+
 
       propagateTrack(iEvent, iSetup, muonTrk, mCount);
     }
