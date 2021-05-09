@@ -62,7 +62,7 @@ int main(){
 
   
   //  int iColors[16] = {kRed, kOrange+4, kOrange-3, kOrange-2, kBlue, kBlue-9, kAzure-9, kAzure+10, kCyan, kGreen+1, kCyan-2, kYellow+2}; //kGray+1};
-  int iColors[7] = {kOrange-3, kRed, kMagenta, kBlue, kCyan, kGreen+1, kGray+2};
+  int iColors[14] = {kBlack, kGray+1, kGreen+1, kSpring-2, kYellow+1, kOrange-2, kRed+1, kPink-2, kMagenta+1, kViolet-2, kBlue+1, kAzure-2, kCyan+1, kTeal-2};
   int iStyle[4] = {20, 21, 22, 23}; //kGray+1};
   //  int iColors[6] = {kGreen+1, kBlue, kRed};
   
@@ -191,6 +191,11 @@ int main(){
   TH1F* dX_wrtPrev = new TH1F("dX_wrtPrev", "", 1000, -20, 20);
   TH1F* dY_wrtPrev = new TH1F("dY_wrtPrev", "", 1000, -20, 20);
 
+  TH1F* h_MuonCross[14];
+  TH1F* h_Muon1stHit[14];
+  TH1F* h_MuonNHit[14][14];
+
+
    for(int ij=0; ij<14; ++ij){
      h2_YvsX[ij] = new TH2F(Form("h2_YvsX_L%d", ij), "", 600, -300., 300., 600, -300., 300.);
      h2_iRvsiPhi[ij] = new TH2F(Form("h2_iRvsiPhi_L%d", ij), "", 100, -50., 50., 300, 0., 300.);
@@ -213,7 +218,15 @@ int main(){
      nMuons_vsEta_All[ij] = new TH1F(Form("nMuons_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
      nMuonsPercm2_vsEta_All[ij] = new TH1F(Form("nMuonsPercm2_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
      ratePercm2_vsEta_All[ij] = new TH1F(Form("ratePercm2_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
+  
+     h_MuonCross[ij] = new TH1F(Form("h_MuonCross_L%d", ij+firstLayer), "", 300, 1., 4.);
+     h_Muon1stHit[ij] = new TH1F(Form("h_Muon1stHit_L%d", ij+firstLayer), "", 300, 1., 4.);
+
+     for(int kl=0; kl<14; ++kl){
+       h_MuonNHit[kl][ij] = new TH1F(Form("h_MuonNHit_L%d_N%d", ij+firstLayer, kl), "", 300, 1., 4.);
+     }
    }
+
 
    int nEvents = newT->GetEntries();
    std::cout << " nEvents = " << nEvents << std::endl;
@@ -297,6 +310,9 @@ int main(){
 	 float trkR = sqrt(iT*iT + trackY*trackY);                                                                                                                        
 	 float trkEtaOnLayer = asinh(zVal[iL]/trkR);                                                                                                                      
 	 nMuons_vsEta_All[iL]->Fill(std::abs(trkEtaOnLayer));  
+
+	 h_MuonCross[iL]->Fill(trkEtaOnLayer); 
+
 	 //std::cout << " iTc = " << iTc << std::endl;
 	 // continue;
 
@@ -411,6 +427,8 @@ int main(){
 	     foundFirstHit[trackIdx] = true; 
 	     matchedTrack[trackIdx] = 1;
 	     startLMatchedTrack[trackIdx] = iL;
+
+	     h_Muon1stHit[iL]->Fill(trkEtaOnLayer);
 	     //std::cout << " should be true " << std::endl;
 	   }
 	 }
@@ -418,6 +436,8 @@ int main(){
        // 		   << " foundFirstHit[trackIdx] = " << foundFirstHit[trackIdx] << std::endl;
        }
      }//layer
+
+     for(int nHits = 1; nHits<14; ++nHits){
 
      foundFirstHit.clear();
      x1stHit.clear();
@@ -431,7 +451,8 @@ int main(){
          ++iTc;
          int trackIdx = trkN[iL][iTc];
 	 //std::cout << " trkIdx = " << trackIdx << " matchedTrack[trackIdx] = " << matchedTrack[trackIdx] << " iL = " << iL << std::endl;
-         if(matchedTrack[trackIdx] + startLMatchedTrack[trackIdx] < 5){
+         if( (matchedTrack[trackIdx] < nHits && nHits < (13 - startLMatchedTrack[trackIdx])) ||
+	     (nHits > (13 - startLMatchedTrack[trackIdx]) && matchedTrack[trackIdx] < (13 - startLMatchedTrack[trackIdx]))){
 	   // std::cout << " missing hits " << std::endl; 
 	   continue;
 	 }
@@ -459,11 +480,12 @@ int main(){
 
 	   float reciR = rhiR[iL][iRc];
 	   std::pair<int, int> channelPhi = std::pair<int, int>(iL, std::abs(reciR));
-	   if(okChannelsPhi.find(channelPhi) != okChannelsPhi.end()) { /*std::cout << " channel again " << std::endl;*/ okChannelsPhi[channelPhi] += 1;}
-	   else {  okChannelsPhi[channelPhi] = 1;}
-
+	   if(nHits == 5){
+	     if(okChannelsPhi.find(channelPhi) != okChannelsPhi.end()) { /*std::cout << " channel again " << std::endl;*/ okChannelsPhi[channelPhi] += 1;}
+	     else {  okChannelsPhi[channelPhi] = 1;}
+	   }
 	   if(foundFirstHit[trackIdx] == false && dR2 > rhA[iL][iRc] *  4./pigreco){
-	     mipPerPhi[channelPhi].push_back(-2);
+	     if(nHits == 5)  mipPerPhi[channelPhi].push_back(-2);
 	     //std::cout << " 1st hit dR "<< std::endl;
 	     continue;
 	   }
@@ -477,7 +499,7 @@ int main(){
 	   if(foundFirstHit[trackIdx] == true){	   
 	     
 	     if(dR2_Prev > rhA[iL][iRc] * 4./pigreco){
-	       mipPerPhi[channelPhi].push_back(-1);
+	       if(nHits == 5)  mipPerPhi[channelPhi].push_back(-1);
 	       //std::cout << " prev hit dR "<< std::endl;
 	       continue;
 	     }
@@ -490,20 +512,23 @@ int main(){
 	     xPrevHit[trackIdx] = iR;
 	     yPrevHit[trackIdx] = recY;
 	     foundFirstHit[trackIdx] = true; 
+
+	     h_MuonNHit[nHits][iL]->Fill(trkEtaOnLayer);
 	   }
 
 	   //here rate for trk
-	   if(!alreadyFilled){
+	   if(!alreadyFilled && nHits == 5){
 	     nMuons_vsEta[iL]->Fill(std::abs(trkEtaOnLayer));
 	     alreadyFilled = true;
 	     //std::cout << " trkEtaOnLayer = " << trkEtaOnLayer << " iL = " << iL << " ij = " << ij << std::endl;
 	   }
 
 	   //	   std::cout << " FILLING  channelPhi layer = " << channelPhi.first << " and iR = " << channelPhi.second << std::endl;
-	   mipPerPhi[channelPhi].push_back(rhMip[iL][iRc]);
+	   if(nHits == 5) mipPerPhi[channelPhi].push_back(rhMip[iL][iRc]);
 	 }//recHit loop
        }// trk loop
      } // layer loop
+     }// loop on nhits
    }// events;
 
    //   return 5;
@@ -637,6 +662,114 @@ int main(){
 
    //   if(1 == 2){
    //return;
+
+   //about efficiencies
+
+
+   TH1F* Muon1stHit_eff[14]; 
+   TH1F* MuonNHit_eff[14][14];
+
+   for(int ij=0; ij<14; ++ij){
+     TCanvas* tc = new TCanvas();
+     tc->cd();
+
+     h_MuonCross[ij]->GetYaxis()->SetTitle("muon cross");
+     h_MuonCross[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
+     h_MuonCross[ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/h_MuonCross_L%d.png", ij+firstLayer), "png");
+
+     h_Muon1stHit[ij]->GetYaxis()->SetTitle("muon 1st hit");
+     h_Muon1stHit[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
+     h_Muon1stHit[ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/h_Muon1stHit_L%d.png", ij+firstLayer), "png");
+
+     h_MuonNHit[5][ij]->GetYaxis()->SetTitle("muon N hits");
+     h_MuonNHit[5][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
+     h_MuonNHit[5][ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/h_MuonNHit_L%d_N5.png", ij+firstLayer), "png");
+
+     Muon1stHit_eff[ij] = (TH1F*)h_Muon1stHit[ij]->Clone(Form("Muon1stHit_eff_%d", ij+firstLayer));
+     Muon1stHit_eff[ij]->Reset();
+     Muon1stHit_eff[ij]->Divide(h_Muon1stHit[ij], h_MuonCross[ij]);
+     Muon1stHit_eff[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
+     Muon1stHit_eff[ij]->GetYaxis()->SetTitle("efficiency: finding 1st hit");
+     Muon1stHit_eff[ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/Muon1stHit_eff_L%d.png", ij+firstLayer), "png");
+
+     for(int kl=0; kl<14; ++kl){
+       MuonNHit_eff[kl][ij] = (TH1F*)h_MuonNHit[kl][ij]->Clone(Form("MuonNHit_eff_%d_N%d", ij+firstLayer, kl));
+       MuonNHit_eff[kl][ij]->Reset();
+       MuonNHit_eff[kl][ij]->Divide(h_MuonNHit[kl][ij],h_MuonCross[ij]);
+       MuonNHit_eff[kl][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
+       MuonNHit_eff[kl][ij]->GetYaxis()->SetTitle(Form("efficiency: finding > %d hits", kl));
+       MuonNHit_eff[kl][ij]->Draw();
+       if(kl == 5) tc->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_L%d_N%d.png", ij+firstLayer, kl), "png");
+     }
+   }
+
+   gStyle->SetOptStat(0);
+   gStyle->SetOptStat(0);
+   TLegend *legTGM = new TLegend(0.7,0.30,1.,1.,NULL,"brNDC");
+   legTGM->SetTextFont(42);
+   legTGM->SetTextSize(0.05);
+   legTGM->SetFillColor(kWhite);
+   legTGM->SetLineColor(kWhite);
+   legTGM->SetShadowColor(kWhite);
+
+   TCanvas* tcE = new TCanvas();
+   tcE->cd();
+   Muon1stHit_eff[0]->GetXaxis()->SetTitle("muon eta");
+   Muon1stHit_eff[0]->SetMarkerColor(iColors[0]);
+   Muon1stHit_eff[0]->SetLineColor(kWhite);
+   Muon1stHit_eff[0]->SetMarkerStyle(20);
+   Muon1stHit_eff[0]->Draw("p");
+   for(int ij=0; ij<14; ++ij){
+     Muon1stHit_eff[ij]->SetMarkerColor(iColors[ij]);
+     Muon1stHit_eff[ij]->SetMarkerStyle(20);
+     Muon1stHit_eff[ij]->SetLineColor(kWhite);
+     Muon1stHit_eff[ij]->Draw("same, p");
+     legTGM->AddEntry(Muon1stHit_eff[ij], Form("layer %d", ij+firstLayer), "p");
+   }
+   gStyle->SetOptStat(0);
+   Muon1stHit_eff[0]->GetXaxis()->SetRangeUser(1.2, 3.);
+   legTGM->Draw("same");
+   tcE->Print("plotsMinBias_correctRate/Muon1stHit_eff.png", "png");
+   tcE->Print("plotsMinBias_correctRate/Muon1stHit_eff.root", "root");
+   
+   for(int kl=1; kl<14; ++kl){
+
+     TLegend *legTGM2 = new TLegend(0.7,0.30,1.,1.,NULL,"brNDC");
+     legTGM2->SetTextFont(42);
+     legTGM2->SetTextSize(0.03);
+     legTGM2->SetFillColor(kWhite);
+     legTGM2->SetLineColor(kWhite);
+     legTGM2->SetShadowColor(kWhite);
+
+     TCanvas* tcNE = new TCanvas();
+     MuonNHit_eff[kl][0]->GetXaxis()->SetTitle("muon eta");
+     MuonNHit_eff[kl][0]->SetMarkerColor(iColors[0]);
+     MuonNHit_eff[kl][0]->SetLineColor(kWhite);
+     MuonNHit_eff[kl][0]->SetMarkerStyle(20);
+     MuonNHit_eff[kl][0]->Draw("p");
+     for(int ij=0; ij<14; ++ij){
+       MuonNHit_eff[kl][ij]->SetMarkerColor(iColors[ij]);
+       MuonNHit_eff[kl][ij]->SetMarkerStyle(20);
+       MuonNHit_eff[kl][ij]->SetLineColor(kWhite);
+       MuonNHit_eff[kl][ij]->Draw("same, p");
+       if(kl < (13 - ij)) legTGM2->AddEntry(MuonNHit_eff[kl][ij], Form("l. %d (nH. > %d)", ij+firstLayer, kl), "p");
+       else legTGM2->AddEntry(MuonNHit_eff[kl][ij], Form("l. %d (nH. > %d)", ij+firstLayer, 13 - ij), "p");
+     }
+     gStyle->SetOptStat(0);
+     MuonNHit_eff[kl][0]->GetXaxis()->SetRangeUser(1.2, 3.);
+     MuonNHit_eff[kl][0]->GetYaxis()->SetRangeUser(0., 1.05);
+     legTGM2->Draw("same");
+     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_N%02d.png", kl), "png");
+     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_N%02d.root", kl), "root");
+   }
+   return 20;
+
+
+   gStyle->SetOptStat(1);
    for(int ij=0; ij<14; ++ij){
      TCanvas* tc = new TCanvas();
      tc->cd();
@@ -699,11 +832,10 @@ int main(){
      h2_iR_vsR[ij]->Draw(""); //"colz");
      h2_iR_vsR[ij]->SetMarkerStyle(7);
      tc2->Print(Form("plotsMinBias_correctRate/h2_iR_vsR_L%d.png", ij+firstLayer), "png");
-     // tc->Print(Form("plotsMinBias_correctRate/h2_iR_vsR_L%d.root", ij+firstLayer), "root");
 
-     //    tc->Print(Form("plotsMinBias_correctRate/h2_iR_vsEta_L%d.root", ij), "root"); 
    }
    //}//1==2
+
 
    TLatex tL;
    tL.SetNDC();
@@ -804,9 +936,9 @@ int main(){
       h_Mip_Phi[savedCout]->Fit("hfithisto", "RB");
 
       //      tL.DrawLatex(0.55, 0.70, Form("by Chi2 = %d", rejectedByChi));
-      tL.DrawLatex(0.55, 0.60, Form("by 1st dR = %d", rejectedBy1stdR));
-      tL.DrawLatex(0.55, 0.50, Form("by prev dR = %d", rejectedByPrevdR));
-      tL.DrawLatex(0.55, 0.40, Form("found = %d", countFilled));
+      // tL.DrawLatex(0.55, 0.60, Form("by 1st dR = %d", rejectedBy1stdR));
+      // tL.DrawLatex(0.55, 0.50, Form("by prev dR = %d", rejectedByPrevdR));
+      // tL.DrawLatex(0.55, 0.40, Form("found = %d", countFilled));
 
       tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Phi_%d_%d.png", iL+firstLayer, iR), "png");
       if(iL == 0) tcM->Print(Form("plotsMinBias_correctRate/cells/h_Mip_Phi_%d_%d.root", iL+firstLayer, iR), "root");
