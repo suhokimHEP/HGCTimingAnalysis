@@ -26,12 +26,15 @@
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
 #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
+#include "DataFormats/GeometrySurface/interface/MediumProperties.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/HGCRecHit/interface/HGCRecHitCollections.h"
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/TrajectorySeed/interface/PropagationDirection.h"
+
+
 
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
@@ -52,6 +55,8 @@
 
 #include "HGCTimingAnalysis/HGCTiming/interface/UtilClasses.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
+
+#include "HGCTimingAnalysis/HGCTiming/plugins/SupportScintillator.h"
 
 #include "TLorentzVector.h"
 #include "TRandom3.h"
@@ -184,6 +189,8 @@ private:
   TH1F* rMax_vsEta[nSciLayers];
   TH1F* h_nEvents;
 
+  TProfile* nHits_layer;
+
   TH1F* h_etaMuon;
   TH1F* h_etaMuon_trkTrk;
   TH1F* h_etaMuon_glbTrk;
@@ -207,8 +214,17 @@ private:
   std::vector<float> crossX;
   std::vector<float> crossY;
   std::vector<float> crossZ;
+  std::vector<float> crossEX;
+  std::vector<float> crossEY;
   std::vector<float> crossL;
   std::vector<float> crossM;
+  std::vector<float> crossEta;
+  std::vector<float> crossPhi;
+  std::vector<uint32_t> crossID;
+  std::vector<int> crossiR;
+  std::vector<int> crossiP;
+  std::vector<float> crossCellEta;
+  std::vector<float> crossCellPhi;
   std::vector<float> muonChi;
   std::vector<short int> muonTrkQ;
   std::vector<float> recHitX;
@@ -219,6 +235,8 @@ private:
   std::vector<int> recHitiPhi;
   std::vector<int> recHitiEta;
   std::vector<int> recHitL;
+  std::vector<float> recHitPhi;
+  std::vector<float> recHitEta;
   std::vector<float> recHitEne;
   std::vector<float> recHitMip;
   std::vector<float> recHitNoise;
@@ -302,8 +320,17 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   newT->Branch("crossX", &crossX);
   newT->Branch("crossY", &crossY);
   newT->Branch("crossZ", &crossZ);
+  newT->Branch("crossEX", &crossEX);
+  newT->Branch("crossEY", &crossEY);
   newT->Branch("crossL", &crossL);
   newT->Branch("crossM", &crossM);
+  newT->Branch("crossEta", &crossEta);
+  newT->Branch("crossPhi", &crossPhi);
+  newT->Branch("crossID", &crossID);
+  newT->Branch("crossiR", &crossiR);
+  newT->Branch("crossiP", &crossiP);
+  newT->Branch("crossCellEta", &crossCellEta);
+  newT->Branch("crossCellPhi", &crossCellPhi);
   newT->Branch("muonChi", &muonChi);
   newT->Branch("muonTrkQ", &muonTrkQ);
   newT->Branch("recHitX", &recHitX);
@@ -314,10 +341,14 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   newT->Branch("recHitiPhi", &recHitiPhi);
   newT->Branch("recHitiEta", &recHitiEta);
   newT->Branch("recHitL", &recHitL);
+  newT->Branch("recHitPhi", &recHitPhi);
+  newT->Branch("recHitEta", &recHitEta);
   newT->Branch("recHitEne", &recHitEne);
   newT->Branch("recHitMip", &recHitMip);
   newT->Branch("recHitNoise", &recHitNoise);
 
+
+  nHits_layer = fs->make<TProfile>("nHits_layer", "", nSciLayers, 0., nSciLayers);
 
   h_minR_pos = fs->make<TH2F>("h_minR_pos", "", nSciLayers, 0., nSciLayers, 1000, 100., 600.);
   h_minR_neg = fs->make<TH2F>("h_minR_neg", "", nSciLayers, 0., nSciLayers, 1000, 100., 600.);
@@ -408,6 +439,8 @@ void HGCalTimingAnalyzer::buildLayers() {
   float maxR[nSciLayers] = {199., 203., 213., 218., 229., 240., 252., 252., 252., 252., 252., 252., 252., 252.};
   float zVal[nSciLayers] = {411.29, 416.739, 422.187, 427.636, 436.172, 444.722, 453.263, 461.817, 470.371, 478.925, 487.47, 496.024, 504.577, 513.127};
 
+  float X0[nSciLayers] = {48.353, 2.549, 2.549, 2.55, 4.336, 4.335, 4.336, 4.335, 4.336, 4.336, 4.335, 4.328, 4.338, 4.337};
+  float dEdX[nSciLayers] = {765.426, 51.444, 51.445, 51.444, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.039, 86.930, 86.929};
 
   for (int iSide = 0; iSide < 2; ++iSide) {
     for (int iL = 0; iL < nSciLayers; ++iL) {
@@ -416,6 +449,8 @@ void HGCalTimingAnalyzer::buildLayers() {
       firstDisk_[iSide][iL] = std::make_unique<GeomDet>(Disk::build(Disk::PositionType(0, 0, zSide),
 								    Disk::RotationType(),
 								    SimpleDiskBounds(minR[iL], maxR[iL], zSide - 0.5, zSide + 0.5)).get());
+
+      (const_cast<Plane &>(firstDisk_[iSide][iL]->surface())).setMediumProperties(MediumProperties(X0[iL], dEdX[iL]*1.e-3));
     }
   }
   
@@ -425,28 +460,40 @@ void HGCalTimingAnalyzer::buildLayers() {
 void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
 					 const edm::EventSetup &es, const reco::Track& tk, int idx){
   auto bFieldProd = bfield_.product();
-  const Propagator &prop = (*propagator_);
-  // auto prop = propp.clone();
-  // prop->setPropagationDirection(oppositeToMomentum);
+  const Propagator &propp = (*propagator_);
+  auto prop = propp.clone();
+  prop->setPropagationDirection(alongMomentum);
 
   if(debugCOUT)
     std::cout << " propagateTrack p = " << tk.p() << " pt = " << tk.pt() << " eta = " << tk.eta() << std::endl;
 
-  //  FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
-  FreeTrajectoryState fts = trajectoryStateTransform::innerFreeState((tk), bFieldProd);
+  FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
+  //FreeTrajectoryState fts = trajectoryStateTransform::innerFreeState((tk), bFieldProd);
+  //  std::cout << " initiale position() = " << fts.position().x() << " " << fts.position().y() << " " << fts.position().z() << "mometum = " << fts.momentum().mag() << std::endl;
   int iSide = int(tk.eta() > 0);
-  bool goodTrk = false;
-  float chi = -1.;
-  signed short trakQuality = -1;
 
   for(int ij=0; ij<nSciLayers; ++ij){
-  //for(int ij=nSciLayers-1; ij<=0; --ij){
-    TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
-
+    //for(int ij=nSciLayers-1; ij>=0; --ij){
+    
+    //    TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
+    TrajectoryStateOnSurface tsos = prop->propagate(fts, firstDisk_[iSide][ij]->surface());
+    //std::cout << " to layer " << ij << " momentum = " << fts.momentum().mag() << std::endl;
+    
+    bool goodTrk = false;
+    float chi = tk.normalizedChi2();
+    signed short trakQuality = -1;
+    
     if (tsos.isValid()) {
-      goodTrk = true;
+
       auto position = tsos.globalPosition();
       math::XYZPoint pos(position.x(), position.y(), position.z()); 
+      // std::cout << " is valid z = " << pos.z() << std::endl;
+      // std::cout << "  position() = " << tsos.globalPosition().x() << " " << tsos.globalPosition().y() 
+      //  		<< " " << tsos.globalPosition().z() << " p = " << tsos.globalMomentum().mag() << std::endl;
+      float eX = sqrt(tsos.localError().matrix()(3,3));
+      float eY = sqrt(tsos.localError().matrix()(4,4));
+
+
       xposOnlayer[iSide][ij].push_back(pos.x());
       yposOnlayer[iSide][ij].push_back(pos.y());
       momOnlayer[iSide][ij].push_back(tk.p());
@@ -455,22 +502,49 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       if(debugCOUT)
 	std::cout << " valid layer = " << ij << " trkX = " << pos.x() << " ttrkY = " << pos.y() << " trkEta = " << tk.eta() << std::endl;
 
+      float trkR = sqrt(pos.x()*pos.x() + pos.y()*pos.y());
+      float trkEta = asinh(pos.z()/trkR);
+      nMuons_vsEta[ij]->Fill(std::abs(trkEta));
+      if(debugCOUT) std::cout << " eta = " << tk.eta() << " R = " << trkR << " trkEta = " << trkEta << std::endl;
+
+      TLorentzVector dummyV;
+      dummyV.SetVect(TVector3(pos.x(), pos.y(), pos.z()));
+
+      //RAFIXME
+      SupportScintillator muonHelp;
+      muonHelp.setValues(1, ij+firstSciLayer, pos.x(), pos.y(), pos.z(), dummyV.Eta(), dummyV.Phi());
+      HGCScintillatorDetId crossId;
+      muonHelp.get_ScintID(crossId);
+      float crossedeCellPhi = recHitTools.getPhi(crossId);
+      float crossedeCellEta = recHitTools.getEta(crossId);
+      if(crossedeCellPhi == 0) continue;
+      goodTrk = true;
+
       muonP.push_back(tk.p());
       muonPt.push_back(tk.pt());
       muonEta.push_back(tk.eta());
       muonPhi.push_back(tk.phi());
       crossX.push_back(pos.x());
       crossY.push_back(pos.y());
+      crossEX.push_back(eX);      
+      crossEY.push_back(eY);      
       crossZ.push_back(pos.z());
       crossL.push_back(ij+firstSciLayer);
       crossM.push_back(idx);
 
-      //      nMuons_vsEta[ij]->Fill(tk.eta());
-      //
-      float trkR = sqrt(pos.x()*pos.x() + pos.y()*pos.y());
-      float trkEta = asinh(pos.z()/trkR);
-      nMuons_vsEta[ij]->Fill(std::abs(trkEta));
-      if(debugCOUT) std::cout << " eta = " << tk.eta() << " R = " << trkR << " trkEta = " << trkEta << std::endl;
+      crossEta.push_back(dummyV.Eta());
+      crossPhi.push_back(dummyV.Phi());
+
+      crossID.push_back(crossId.rawId());
+      crossiR.push_back(crossId.iradius());
+      crossiP.push_back(crossId.iphi());
+      crossCellEta.push_back(crossedeCellEta);
+      crossCellPhi.push_back(crossedeCellPhi);
+
+      if(debugCOUT){
+	std::cout << " >>> dummyV.Eta() = " << dummyV.Eta() << " recHitTools.getEta(recHitTools.getPosition(crossId)) = " << recHitTools.getEta(crossId) 
+		  << " >>> dummyV.Phi() = " << dummyV.Phi() << " recHitTools.getPhi(recHitTools.getPosition(crossId)) = " << recHitTools.getPhi(crossId) << std::endl;
+      }
 
       int etaBin = nMuons_vsEta[ij]->FindBin(std::abs(trkEta));
       //      if(tk.eta() < 0)  std::cout << "trkEta = " << trkEta << " tk.eta()  = " << tk.eta() << std::endl;
@@ -480,9 +554,7 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
     }
 
 
-    if(goodTrk && chi == -1 && trakQuality == -1){
-      chi = tk.normalizedChi2();
-
+    if(goodTrk){
       reco::TrackBase::TrackQuality trackQualityUndef = reco::TrackBase::qualityByName("undefQuality");
       reco::TrackBase::TrackQuality trackQualityLoose = reco::TrackBase::qualityByName("loose");
       reco::TrackBase::TrackQuality trackQualityTight = reco::TrackBase::qualityByName("tight");
@@ -507,10 +579,10 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       if(debugCOUT)
 	std::cout << " trakQuality = " << trakQuality << " chi = " << chi << std::endl;
     }
-    if(goodTrk){
-      muonChi.push_back(chi);
-      muonTrkQ.push_back(trakQuality);
-    }
+
+    muonChi.push_back(chi);
+    muonTrkQ.push_back(trakQuality);
+
   }
 }
 
@@ -540,8 +612,17 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   crossX.clear();
   crossY.clear();
   crossZ.clear();
+  crossEX.clear();
+  crossEY.clear();
   crossL.clear();
   crossM.clear();
+  crossEta.clear();
+  crossPhi.clear();
+  crossID.clear();
+  crossiR.clear();
+  crossiP.clear();
+  crossCellEta.clear();
+  crossCellPhi.clear();
   muonChi.clear();
   muonTrkQ.clear();
   recHitX.clear();
@@ -552,6 +633,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   recHitiPhi.clear();
   recHitiEta.clear();
   recHitL.clear();
+  recHitPhi.clear();
+  recHitEta.clear();
   recHitEne.clear();
   recHitMip.clear();
   recHitNoise.clear();
@@ -634,12 +717,12 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     if(!muon.track().isNull()){
       reco::Track muonTrk = *(muon.track());
       h_etaMuon_trkTrk->Fill(muonTrk.eta());
-    }
+      //    }
 
       //      std::cout << " ci sono " << std::endl; 
-    if (!muon.globalTrack().isNull()){
-      reco::Track muonTrk = *(muon.globalTrack());
-      h_etaMuon_glbTrk->Fill(muonTrk.eta());
+      // if (!muon.globalTrack().isNull()){
+      //   reco::Track muonTrk = *(muon.globalTrack());
+      //   h_etaMuon_glbTrk->Fill(muonTrk.eta());
       
       if(debugCOUT)
 	std::cout << "track  innerPosition() = " << muonTrk.innerPosition() << " innerMomentum() = " << muonTrk.innerMomentum()
@@ -732,11 +815,13 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   float minL = 99;
   float minRvalues[nSciLayers][2];
   float maxRvalues[nSciLayers][2];
+  float vecNhits[14];
   for(int ij=0; ij<nSciLayers; ++ij){
     minRvalues[ij][0] = 0.;
     minRvalues[ij][1] = 0.;
     maxRvalues[ij][0] = 0.;
     maxRvalues[ij][1] = 0.;
+    vecNhits[ij] = 0;
   }
 
   for(std::map<DetId, const HGCRecHit*>::iterator iop=hitmap.begin(); iop != hitmap.end(); ++iop){
@@ -748,6 +833,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     float rhY = recHitTools.getPosition(hitid).y();
     float rhZ = recHitTools.getPosition(hitid).z();
     int rhL = recHitTools.getLayerWithOffset(hitid);
+    float rhEta = recHitTools.getEta(recHitTools.getPosition(hitid));
+    float rhPhi = recHitTools.getPhi(recHitTools.getPosition(hitid));
 
     //to extract some conversion factors 
     unsigned int layer = recHitTools.getLayerWithOffset(hitid);
@@ -771,12 +858,34 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
 
 
     if(sectionType != 2) continue;
+
+    vecNhits[rhL - firstSciLayer] += 1;
+
     HGCScintillatorDetId sciId(hitid);
     int rhiEta = sciId.ietaAbs();
     int rhiPhi = sciId.iphi();
     int rhiR = sciId.iradius();
     float rhSize = geom_->getArea(sciId);
-    //    std::cout << " area = " << rhSize << std::endl;
+    // std::cout << " from detId iR = " << rhiR << " iphi = " << rhiPhi << " type = " << sciId.type() 
+    // 	      << " rhX = " << rhX << " rhY = " << rhY << " rhZ = " << rhZ << " layer = " << sciId.layer() << " zSide = " << sciId.zside()
+    // 	      << " rhEta = " << rhEta << " rhPhi = " << rhPhi << " rhiEta = " << rhiEta << std::endl;
+
+    SupportScintillator myHelp;
+    myHelp.setValues(1, rhL, rhX, rhY, rhZ, rhEta, rhPhi);
+    HGCScintillatorDetId mySciId;
+    myHelp.get_ScintID(mySciId);
+    HGCScintillatorDetId mySciId2(mySciId.rawId());
+    if(mySciId != sciId) std::cout << " PROBLEM " << " event = " << nEvents << std::endl;
+    if(mySciId2 != sciId) std::cout << " PROBLEM2 " << std::endl;
+
+    // std::cout << "0  iR computed = " << mySciId.iradius() << " iphi = " << mySciId.iphi() << " rhL = " << mySciId.layer() << std::endl;
+    // myHelp.setValues(1, rhL, rhX, rhY, rhZ, rhEta, rhPhi);
+    // std::cout << "1  rhiR = " << rhiR << " rhiPhi = " << rhiPhi << " mySciId.iradius() = " << mySciId.iradius() 
+    //  	      << " mySciId.iphi() = " << mySciId.iphi() << " or eta = " << recHitTools.getEta(sciId) << " new eta = " << recHitTools.getEta(mySciId) 
+    //    	      << " or phi = " << recHitTools.getPhi(sciId) << " new phi = " << recHitTools.getPhi(mySciId) << std::endl;
+    // myHelp.setValues(2, rhL, rhX, rhY, rhZ, rhEta, rhPhi);
+    // std::cout << "2  iR computed = " << myHelp.get_Ring() << " iphi = " << myHelp.get_iPhi() << std::endl;
+
 
     if(rhL < minL){
       minL = rhL;
@@ -822,6 +931,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     recHitiPhi.push_back(rhiPhi);
     recHitiEta.push_back(rhiEta);
     recHitL.push_back(rhL);
+    recHitEta.push_back(rhEta);
+    recHitPhi.push_back(rhPhi);
     recHitEne.push_back(rhEnergy);
     recHitMip.push_back(MIP);
     recHitNoise.push_back(sigmaNoiseMIP);
@@ -860,6 +971,9 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   h_minL->Fill(minL);
 
   for(int ij = 0; ij < nSciLayers; ++ ij){
+    nHits_layer->Fill(ij, vecNhits[ij]);
+    vecNhits[ij] = 0;
+
     h_minR_pos->Fill(ij, minRvalues[ij][1]);
     h_minR_neg->Fill(ij, minRvalues[ij][0]);
     h_minR->Fill(ij, minRvalues[ij][0]);
