@@ -226,6 +226,7 @@ private:
   std::vector<int> crossiP;
   std::vector<float> crossCellEta;
   std::vector<float> crossCellPhi;
+  std::vector<float> crossP;
   std::vector<float> crossPt;
   std::vector<float> muonChi;
   std::vector<short int> muonTrkQ;
@@ -333,6 +334,7 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
   newT->Branch("crossiP", &crossiP);
   newT->Branch("crossCellEta", &crossCellEta);
   newT->Branch("crossCellPhi", &crossCellPhi);
+  newT->Branch("crossP", &crossP);
   newT->Branch("crossPt", &crossPt);
   newT->Branch("muonChi", &muonChi);
   newT->Branch("muonTrkQ", &muonTrkQ);
@@ -445,10 +447,16 @@ void HGCalTimingAnalyzer::buildLayers() {
   float X0_Si[firstSciLayer-1] = {0.442, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995, 0.852, 0.994, 0.854, 0.994,
 			       0.854, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995, 0.853, 0.995,
 			       2.497, 2.55, 2.549, 2.55, 2.549, 2.549, 2.55, 2.549}; 
-  float dEdX_Si[firstSciLayer-1] = {4.829, 12.960, 8.916, 12.960, 8.916, 12.960, 8.916, 12.960, 8.916, 12.959, 8.906, 12.960, 8.916,
-				 12.960, 8.916, 12.96, 8.917, 12.960, 8.916, 12.960, 8.916, 12.960, 8.917, 12.960, 8.916, 12.960,
-				 8.916, 12.960, 51.705, 51.444, 51.444, 51.444, 51.444, 51.445, 51.444, 51.444};
+  float dEdX_Si[firstSciLayer-1] = {0.338792, 0.667374, 0.477415, 0.667374, 0.477415, 0.667374, 0.477415, 0.667374, 0.477415, 0.667374, 
+				    0.476825, 0.667374, 0.477415, 0.667374, 0.477428, 0.667374, 0.477428, 0.667374, 0.477428, 0.667374, 
+				    0.477428, 0.667374, 0.477427, 0.667375, 0.477427, 0.667375, 0.477427, 0.667375, 2.572552, 2.55773, 
+				    2.55773, 2.55773, 2.55773, 2.55773, 2.55773, 2.55773};
 
+
+  //{0.027640, 0.066222, 0.05311, 0.066222, 0.05311, 0.066222, 0.05311, 0.066222, 0.05311, 0.066222, 
+  //				    0.053004, 0.066222, 0.05311, 0.066222, 0.05311, 0.066223, 0.05311, 0.066222, 0.05311, 0.066222,
+  //				    0.05311, 0.066222, 0.05311, 0.066223, 0.053110, 0.066222, 0.05311, 0.066222, 0.178492, 0.181661, 
+  //				    0.181661, 0.181661, 0.18166, 0.181661, 0.181661, 0.18166};
 
   float minR[nSciLayers] = {153., 153., 153., 153., 137., 137., 119., 119., 119., 119., 104., 104., 104., 104};
   float maxR[nSciLayers] = {199., 203., 213., 218., 229., 240., 252., 252., 252., 252., 252., 252., 252., 252.};
@@ -457,7 +465,9 @@ void HGCalTimingAnalyzer::buildLayers() {
   //  float X0[nSciLayers] = {48.353, 2.549, 2.549, 2.55, 4.336, 4.335, 4.336, 4.335, 4.336, 4.336, 4.335, 4.328, 4.338, 4.337};
   float X0[nSciLayers] = {2.55, 2.549, 2.549, 2.55, 4.336, 4.335, 4.336, 4.335, 4.336, 4.336, 4.335, 4.328, 4.338, 4.337};
   //  float dEdX[nSciLayers] = {765.426, 51.444, 51.445, 51.444, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.039, 86.930, 86.929};
-  float dEdX[nSciLayers] = {51.444, 51.444, 51.445, 51.444, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.582, 87.039, 86.930, 86.929};
+  float dEdX[nSciLayers] = {2.55773, 2.55773, 2.55773, 2.55773, 4.334466, 4.334466, 4.334466, 4.334467, 4.334466, 4.334466, 4.334466, 4.304641, 4.331802, 4.331801};
+  //{0.181661, 0.181661, 0.181661, 0.18166, 0.309308, 0.309308, 0.309308, 0.309308, 0.309308, 0.309308, 0.309308, 0.308699, 0.309479, 0.309479};
+
 
   for (int iSide = 0; iSide < 2; ++iSide) {
     for(int iL = 0; iL < firstSciLayer-1; ++iL){
@@ -496,20 +506,25 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
 
   FreeTrajectoryState fts = trajectoryStateTransform::outerFreeState((tk), bFieldProd);
   //FreeTrajectoryState fts = trajectoryStateTransform::innerFreeState((tk), bFieldProd);
-  //  std::cout << " initiale position() = " << fts.position().x() << " " << fts.position().y() << " " << fts.position().z() << "mometum = " << fts.momentum().mag() << std::endl;
+  // std::cout << " initiale position() = " << fts.position().x() << " " << fts.position().y() << " " << fts.position().z() << "mometum = " << fts.momentum().mag() << std::endl;
   int iSide = int(tk.eta() > 0);
 
   TrajectoryStateOnSurface tsosG;
 
   for(int ij=0; ij<firstSciLayer-1; ++ij){
     TrajectoryStateOnSurface tsos = (ij == 0) ? prop->propagate(fts, firstDiskSi_[iSide][ij]->surface()) : prop->propagate(tsosG, firstDiskSi_[iSide][ij]->surface());
+    
+    /*
     if(tsos.isValid()) {
-    float eX = sqrt(tsos.localError().matrix()(3,3));
-    float eY = sqrt(tsos.localError().matrix()(4,4));
-    std::cout << " Si layer = " << ij + 1 << " position() = " << tsos.globalPosition().x() << " " << tsos.globalPosition().y()
-	      << " " << tsos.globalPosition().z() << " p = " << tsos.globalMomentum().mag() 
-	      << " pt = " << tsos.globalMomentum().perp() << " eX = " << eX << " eY = " << eY << std::endl;
+      //float eX = sqrt(tsos.localError().matrix()(3,3));
+      //float eY = sqrt(tsos.localError().matrix()(4,4));
+    std::cout << " Si layer = " << ij + 1 
+      //<< " position() = " << tsos.globalPosition().x() << " " << tsos.globalPosition().y() << " " << tsos.globalPosition().z() 
+	      << " p = " << tsos.globalMomentum().mag() 
+      //<< " pt = " << tsos.globalMomentum().perp() << " eX = " << eX << " eY = " << eY 
+	      << std::endl;
     }
+    */
     tsosG = tsos;
     if(!tsosG.isValid()) break;
   }
@@ -522,7 +537,7 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
     //    TrajectoryStateOnSurface tsos = prop.propagate(fts, firstDisk_[iSide][ij]->surface());
     TrajectoryStateOnSurface tsos = prop->propagate(tsosG, firstDisk_[iSide][ij]->surface());
     tsosG = tsos;
-    std::cout << " to layer " << ij << std::endl;
+    //std::cout << " to layer " << ij << std::endl;
     
     bool goodTrk = false;
     float chi = tk.normalizedChi2();
@@ -535,12 +550,16 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       float eX = sqrt(tsos.localError().matrix()(3,3));
       float eY = sqrt(tsos.localError().matrix()(4,4));
 
-      std::cout << " Sci layer = " << ij+firstSciLayer << " is valid z = " << pos.z() << std::endl;
-      std::cout << "  position() = " << tsos.globalPosition().x() << " " << tsos.globalPosition().y() 
-		<< " " << tsos.globalPosition().z() << " p = " << tsos.globalMomentum().mag()
-		<< " pt = " << tsos.globalMomentum().perp()
-		<< " eX = " << eX << " eY = " << eY << std::endl;
-
+      /*
+      //std::cout << " Sci layer = " << ij+firstSciLayer //<< std::endl;
+	//<< " is valid z = " << pos.z() << std::endl;
+      std::cout << " Sci layer = " << ij+firstSciLayer
+	//<< "  position() = " << tsos.globalPosition().x() << " " << tsos.globalPosition().y() << " " << tsos.globalPosition().z() 
+		<< " p = " << tsos.globalMomentum().mag()
+	//	<< " pt = " << tsos.globalMomentum().perp()
+	//	<< " eX = " << eX << " eY = " << eY 
+		<< std::endl;
+      */
       xposOnlayer[iSide][ij].push_back(pos.x());
       yposOnlayer[iSide][ij].push_back(pos.y());
       momOnlayer[iSide][ij].push_back(tk.p());
@@ -587,6 +606,7 @@ void HGCalTimingAnalyzer::propagateTrack(const edm::Event &ev,
       crossiP.push_back(crossId.iphi());
       crossCellEta.push_back(crossedeCellEta);
       crossCellPhi.push_back(crossedeCellPhi);
+      crossP.push_back(tsos.globalMomentum().mag());
       crossPt.push_back(tsos.globalMomentum().perp());
 
       if(debugCOUT){
@@ -671,6 +691,7 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
   crossiP.clear();
   crossCellEta.clear();
   crossCellPhi.clear();
+  crossP.clear();
   crossPt.clear();
   muonChi.clear();
   muonTrkQ.clear();
@@ -706,8 +727,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     if(!muon.isGlobalMuon() ) continue;
     if(!muon::isGoodMuon(muon, muon::GlobalMuonPromptTight)) continue;
 
-    if(muon.pt() < 4. || muon.p() > 200. ) continue;
-
+    //    if(muon.pt() < 4. ) continue;
+    if(muon.pt() < 15.) continue;
 
     h_etaMuon->Fill(muon.eta());
     h_ptMuon->Fill(muon.pt());
