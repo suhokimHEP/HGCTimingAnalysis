@@ -46,8 +46,8 @@
 
 #include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
 #include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
+//#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
+//#include "SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h"
 
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
@@ -103,8 +103,8 @@ private:
   edm::EDGetTokenT<HGCRecHitCollection> _recHitsEE;
   edm::EDGetTokenT<HGCRecHitCollection> _recHitsFH;
   edm::EDGetTokenT<HGCRecHitCollection> _recHitsBH;
-  edm::EDGetTokenT<std::vector<TrackingVertex> > _vtx;
-  edm::EDGetTokenT<std::vector<TrackingParticle> > _part;
+  // edm::EDGetTokenT<std::vector<TrackingVertex> > _vtx;
+  // edm::EDGetTokenT<std::vector<TrackingParticle> > _part;
   edm::EDGetTokenT<std::vector<CaloParticle> > _caloParticles;
   edm::EDGetTokenT<std::vector<pat::Muon>> _muonSrcM;
   edm::EDGetTokenT<std::vector<reco::Muon>> _muonSrc;
@@ -145,7 +145,7 @@ private:
   double keV2fC[2];
   double keV2MIP;
 
-  double noisefC[2];
+  double noisefC[3];
   double noiseMIP;
   //for cell type
   double fCPerMIP[3];
@@ -273,8 +273,8 @@ HGCalTimingAnalyzer::HGCalTimingAnalyzer(const edm::ParameterSet& iConfig) :
     _recHitsBH = consumes<HGCRecHitCollection>(iConfig.getParameter<edm::InputTag>("HGCBHInput"));
     algo = 1;
   }
-  _vtx = consumes<std::vector<TrackingVertex> >(edm::InputTag("mix","MergedTrackTruth"));
-  _part = consumes<std::vector<TrackingParticle> >(edm::InputTag("mix","MergedTrackTruth"));
+  // _vtx = consumes<std::vector<TrackingVertex> >(edm::InputTag("mix","MergedTrackTruth"));
+  // _part = consumes<std::vector<TrackingParticle> >(edm::InputTag("mix","MergedTrackTruth"));
   _caloParticles = consumes<std::vector<CaloParticle> >(edm::InputTag("mix","MergedCaloTruth"));
   _muonSrcM = consumes<std::vector<pat::Muon> >(edm::InputTag("slimmedMuons"));
   _muonSrc = consumes<std::vector<reco::Muon> >(edm::InputTag("muons"));
@@ -727,8 +727,8 @@ HGCalTimingAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iS
     if(!muon.isGlobalMuon() ) continue;
     if(!muon::isGoodMuon(muon, muon::GlobalMuonPromptTight)) continue;
 
-    //    if(muon.pt() < 4. ) continue;
-    if(muon.pt() < 15.) continue;
+    if(muon.pt() < 4. ) continue;
+    //if(muon.pt() < 15.) continue;
 
     h_etaMuon->Fill(muon.eta());
     h_ptMuon->Fill(muon.pt());

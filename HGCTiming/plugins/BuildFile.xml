@@ -19,5 +19,3 @@
   <use   name="TrackingTools/Records"/>
   <flags   EDM_PLUGIN="1"/>
 </library>
-<Flags CXXFLAGS="-O0"/>
-<Flags CXXFLAGS="-g"/>
