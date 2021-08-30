@@ -81,15 +81,19 @@ int main(){
 
 
   //TFile* inF = TFile::Open("../test/singleMuon_D49.root");
-  //TFile* inF = TFile::Open("../test/singleMuon_D49_newEloss.root");
-  //TFile* inF = TFile::Open("../test/singleMuon_Pt5_D49_newEloss.root");
+  //TFile* inF = TFile::Open("../test/singleMuon_D49_newEloss.root"); // pT 20GeV
+  //  TFile* inF = TFile::Open("../test/singleMuon_Pt5_D49_newEloss.root");
   //TFile* inF = TFile::Open("../test/singleMuon_Pt10_D49_newEloss.root");
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_eLoss.root");
-  TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt10.root");
+  //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt10.root");
+  //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt15.root");
+  //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt5.root");
+
+  TFile* inF = TFile::Open("/eos/cms/store/group/dpg_hgcal/comm_hgcal/amartell/Scint2021/singleMuonGun/ntupleSoN/singleMuon_SoN4.root");
 
   //config
   int firstLayer = 37;
-  //float Nevt = 2.09206e+06 / 2.;
+  // float Nevt = 2.09206e+06;
   //  float Nevt = 12492501;
   float Nevt = 4981488;
   float timeEqui = Nevt / 40.e6; //s
@@ -107,6 +111,7 @@ int main(){
   TTree* newT = (TTree*)inF->Get("ana/newT");
   std::vector<float> *muonP = 0;
   std::vector<float> *muonPt = 0;
+  std::vector<float> *muonSegC = 0;
   std::vector<float> *muonEta = 0;
   std::vector<float> *muonPhi = 0;
   std::vector<float> *crossX = 0;
@@ -142,6 +147,7 @@ int main(){
 
   newT->SetBranchAddress("muonP", &muonP);
   newT->SetBranchAddress("muonPt", &muonPt);
+  //  newT->SetBranchAddress("muonSegC", &muonSegC);
   newT->SetBranchAddress("muonEta", &muonEta);
   newT->SetBranchAddress("muonPhi", &muonPhi);
   newT->SetBranchAddress("crossX", &crossX);
@@ -181,6 +187,8 @@ int main(){
   std::map<std::pair<int, int>, float > okChannelsPhi;
   std::map<std::pair<int, int>, std::vector<float> > enePerPhi;
   std::map<std::pair<int, int>, std::vector<float> > mipPerPhi;
+  std::map<std::pair<int, int>, float > okChannelsPhi_3H;
+  std::map<std::pair<int, int>, std::vector<float> > mipPerPhi_3H;
 
   TH1F* mipAll = new TH1F("mipAll", "", 80, -1., 19.);
   TH2F* h2_YvsX[14];
@@ -190,6 +198,8 @@ int main(){
   TH1F* h_dR[14];
   TH1F* h_dRep[14];
   TH1F* h_dRerr[14];
+  TH1F* h_dXerr[14];
+  TH1F* h_dYerr[14];
   TH1F* h_d_iR[14];
   TH1F* h_d_iPhi[14];
   TH2F* h_d_iR_vs_iPhi[14];
@@ -223,11 +233,19 @@ int main(){
   TH1F* nMuonsPercm2_vsEta[14];
   TH1F* ratePercm2_vsEta[14];
   TH1F* cm2_vsEta[14];
+
+  TH1F* nMuons_3H_vsEta[14];
+  TH1F* nMuonsPercm2_3H_vsEta[14];
+  TH1F* ratePercm2_3H_vsEta[14];
+
   TH1F* nMuons_vsEta_All[14];
   TH1F* nMuonsPercm2_vsEta_All[14];
   TH1F* ratePercm2_vsEta_All[14];
   TH1F* cm2_vsEta_All[14];
 
+
+  TH1F* h_muonSeg_ok = new TH1F("h_muonSeg_ok", "", 1100, 0., 1.1);
+  TH1F* h_muonSeg_bad = new TH1F("h_muonSeg_bad", "", 1100, 0., 1.1);
 
   //check for tracklets
 
@@ -239,6 +257,10 @@ int main(){
 
   TH1F* hDen_etaRange[14];
   TH1F* hNum_etaRange[14];
+  TH1F* hDen_etaRange_3H[14];
+  TH1F* hNum_etaRange_3H[14];
+
+  TH1F* numHits_etaRange[14];
 
    for(int ij=0; ij<14; ++ij){
      h2_YvsX[ij] = new TH2F(Form("h2_YvsX_L%d", ij), "", 600, -300., 300., 600, -300., 300.);
@@ -248,6 +270,8 @@ int main(){
      h_dR[ij] = new TH1F(Form("h_dR_L%d", ij), "", 100, 0., 10.);
      h_dRep[ij] = new TH1F(Form("h_dRep_L%d", ij), "", 500, 0., 0.5);
      h_dRerr[ij] = new TH1F(Form("h_dRerr_L%d", ij), "", 100, 0., 1.);
+     h_dXerr[ij] = new TH1F(Form("h_dXerr_L%d", ij), "", 100, 0., 1.);
+     h_dYerr[ij] = new TH1F(Form("h_dYerr_L%d", ij), "", 100, 0., 1.);
 
      h_d_iR[ij] = new TH1F(Form("h_d_iR_L%d", ij), "", 20, -10., 10.);
      h_d_iPhi[ij] = new TH1F(Form("h_d_iPhi_L%d", ij), "", 20, -10., 10.);
@@ -266,6 +290,10 @@ int main(){
      ratePercm2_vsEta[ij] = new TH1F(Form("ratePercm2_vsEta_L%d", ij+firstLayer), "", 400, 0., 4.);
      cm2_vsEta[ij] = new TH1F(Form("cm2_vsEta_L%d", ij+firstLayer), "", 400, 0., 4.);
 
+     nMuons_3H_vsEta[ij] = new TH1F(Form("nMuons_3H_vsEta_L%d", ij+firstLayer), "", 400, 0., 4.);
+     nMuonsPercm2_3H_vsEta[ij] = new TH1F(Form("nMuonsPercm2_3H_vsEta_L%d", ij+firstLayer), "", 400, 0., 4.);
+     ratePercm2_3H_vsEta[ij] = new TH1F(Form("ratePercm2_3H_vsEta_L%d", ij+firstLayer), "", 400, 0., 4.);
+
      nMuons_vsEta_All[ij] = new TH1F(Form("nMuons_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
      nMuonsPercm2_vsEta_All[ij] = new TH1F(Form("nMuonsPercm2_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
      ratePercm2_vsEta_All[ij] = new TH1F(Form("ratePercm2_vsEta_All_L%d", ij+firstLayer), "", 400, 0., 4.);
@@ -275,6 +303,11 @@ int main(){
 
      hDen_etaRange[ij] = new TH1F(Form("hDen_etaRange_L%d", ij+firstLayer), "", 1, 1.55, 1.71);
      hNum_etaRange[ij] = new TH1F(Form("hNum_etaRange_L%d", ij+firstLayer), "", 1, 1.55, 1.71);
+
+     hDen_etaRange_3H[ij] = new TH1F(Form("hDen_etaRange_3H_L%d", ij+firstLayer), "", 1, 1.55, 1.71);
+     hNum_etaRange_3H[ij] = new TH1F(Form("hNum_etaRange_3H_L%d", ij+firstLayer), "", 1, 1.55, 1.71);
+
+     numHits_etaRange[ij] = new TH1F(Form("numHits_etaRange_L%d", ij+firstLayer), "", 20, 0., 20.);
 
      for(int kl=0; kl<14; ++kl){
        h_MuonNHitK[kl][ij] = new TH1F(Form("h_MuonNHitK_L%d_N%d", ij+firstLayer, kl), "", 300, 1., 4.);
@@ -291,9 +324,11 @@ int main(){
    bool matchByID = true;
    bool matchByID_p009 = true;
    float edgeID_value = 0.009;
+   bool matchByID_error = true;
    bool matchBydR = false;
 
 
+   float errorMax[14] = {0.3, 0.31, 0.32, 0.38, 0.4, 0.42, 0.45, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85};
 
    int nEvents = newT->GetEntries();
    std::cout << " nEvents = " << nEvents << std::endl;
@@ -323,9 +358,11 @@ int main(){
      std::map<int, std::vector<float>> trkCPhi;
      std::map<int, std::vector<int>> trkiR;
      std::map<int, std::vector<int>> trkiP;
+     std::map<int, std::vector<float>> trkSegC;
      std::map<int, std::vector<float>> trkPt;
      std::map<int, std::vector<float>> trkP;
      std::map<int, std::vector<float>> trkChi;
+     std::map<int, std::vector<float>> trkGeneralPt;
      std::map<int, std::vector<short int>> trkQ;
      std::map<std::pair<int,int>, float> seltrkP;
      //    std::cout << " muonP->size() = " << muonP->size() << std::endl;
@@ -346,7 +383,9 @@ int main(){
        trkPt[trkL].push_back(crossPt->at(iM));
        trkiR[trkL].push_back(crossiR->at(iM));
        trkiP[trkL].push_back(crossiP->at(iM));
-       // trkPt[trkL].push_back(muonPt->at(iM));
+       //only  in latest pT 5
+       //       trkSegC[trkL].push_back(muonSegC->at(iM));
+       trkGeneralPt[trkL].push_back(muonPt->at(iM));
        // trkP[trkL].push_back(muonP->at(iM));
        trkChi[trkL].push_back(muonChi->at(iM));
        trkQ[trkL].push_back(muonTrkQ->at(iM));
@@ -380,6 +419,7 @@ int main(){
      std::map<int, float> xPrevHit;
      std::map<int, float> yPrevHit;
      std::map<int, int> matchedTrack;
+     std::map<int, int> matchedTrackLast8L;
      std::map<int, int> matchedTrackL[14];
      std::map<int, int> startLMatchedTrack;
 
@@ -408,6 +448,7 @@ int main(){
 	 h_trkP[iL]->Fill(trkP[iL][iTc]);
 	 h_trkPt[iL]->Fill(trkPt[iL][iTc]);
 
+	 if(trkGeneralPt[iL][iTc] < 10.) continue;
 	 if(trkChi[iL][iTc] > 1.5) continue;
 	 
 	 //std::cout << " trackIdx = " << trackIdx << std::endl;
@@ -417,9 +458,15 @@ int main(){
 	 float trackPhi = trkPhi[iL][iTc];
 	 float trackY = trkY[iL][iTc];
 	 float trkR = sqrt(iT*iT + trackY*trackY);
+	 float dXerr = trkXerr[iL][iTc];
+	 float dYerr = trkYerr[iL][iTc];
 	 float trkEtaOnLayer = asinh(zVal[iL]/trkR);                            
 	 nMuons_vsEta_All[iL]->Fill(std::abs(trkEtaOnLayer));  
 
+	 if(matchByID_error){
+	   if(dXerr > errorMax[iL] || dYerr > errorMax[iL])
+	     continue;
+	 }
 	 if(matchByID_p009){
 	   float dPhi = std::abs(trkCPhi[iL][iTc] - trackPhi);
 	   if(dPhi > pigreco) dPhi -= 2* pigreco;
@@ -450,8 +497,6 @@ int main(){
 	   float dY = recY - trackY;
 	   float dR2 = dX*dX + dY*dY;
 	   float dR = sqrt(dR2);
-	   float dXerr = trkXerr[iL][iTc];
-	   float dYerr = trkYerr[iL][iTc];
 	   float dRerr = sqrt(dXerr*dXerr + dYerr*dYerr);
 
 	   float reciR = rhiR[iL][iRc];
@@ -467,6 +512,8 @@ int main(){
 	   //h_dRvsP[iL]->Fill(dR, trkP[iL][iTc]);
 	   //	   std::cout << " dRerr = " << dRerr << " dXerr = " << dXerr << " dYerr = " << dYerr  << std::endl;
 	   h_dRerr[iL]->Fill(dRerr);
+	   h_dXerr[iL]->Fill(dXerr);
+	   h_dYerr[iL]->Fill(dYerr);
 
 	   h2_dR_vsChi[iL]->Fill(dR, trkChi[iL][iTc]);
 	   h2_dRep_vsChi[iL]->Fill(dRep, trkChi[iL][iTc]);
@@ -480,6 +527,11 @@ int main(){
 
 	   if(matchByID){
 	     if(rhiR[iL][iRc] != trkiR[iL][iTc] || rhiPhi[iL][iRc] != trkiP[iL][iTc]) continue;
+
+	     if(matchByID_error){
+	       if(dXerr > errorMax[iL] || dYerr > errorMax[iL])
+		 continue;
+	     }
 
 	     if(matchByID_p009){
 	       float dPhi = std::abs(trkPhi[iL][iTc] - rhPhi[iL][iRc]);
@@ -508,12 +560,19 @@ int main(){
 	     if(foundFirstHit[trackIdx] == false){
 	       matchedTrack[trackIdx] = 1;
 	       startLMatchedTrack[trackIdx] = iL;
+	       if(iL > 5)
+		 matchedTrackLast8L[trackIdx] = 1;
 	     }
-	     else matchedTrack[trackIdx] += 1;
+	     else {
+	       matchedTrack[trackIdx] += 1;
+	       if(iL > 5)
+                 matchedTrackLast8L[trackIdx] += 1;
+	     }
 	     foundFirstHit[trackIdx] = true;
 
 	     matchedTrackL[iL][trackIdx] = 1;
 	     
+
 	     int localBin = h_MuonNHit[iL]->GetXaxis()->FindBin(trkEtaOnLayer);
 	     if(h_MuonNHit[iL]->GetBinContent(localBin) > h_MuonCross[iL]->GetBinContent(localBin)){
 	       std::cout << " event a = " << ij << std::endl;
@@ -607,6 +666,7 @@ int main(){
    
      //     continue;
      for(int nHits = 1; nHits<14; ++nHits){
+       if (nHits != 3) continue;
      foundFirstHit.clear();
      x1stHit.clear();
      y1stHit.clear();
@@ -619,6 +679,13 @@ int main(){
          ++iTc;
          int trackIdx = trkN[iL][iTc];
 
+	 float trackY = trkY[iL][iTc];
+         float trkR = sqrt(iT*iT + trackY*trackY);
+
+         float trkEtaOnLayer = asinh(zVal[iL]/trkR);
+
+	 if(trkEtaOnLayer > 1.55 && trkEtaOnLayer < 1.7 && matchedTrack[trackIdx] != 0) numHits_etaRange[iL]->Fill(matchedTrack[trackIdx]);
+
 	 //std::cout << " nHits = " << nHits << " matchedTrack[trackIdx] = " << matchedTrack[trackIdx] << " startLMatchedTrack[trackIdx] = " << startLMatchedTrack[trackIdx] << " iL = " << iL << std::endl;
 
 	 //questo ok ma conta ultimi layer per max 1, 2, 3 hits...
@@ -626,11 +693,27 @@ int main(){
 	     matchedTrack[trackIdx] == 0){
 	   continue;
 	 }
-	 if(nHits > matchedTrack[trackIdx]) continue;
+	 
+
+	 //if(nHits > matchedTrack[trackIdx]) continue;
+	 if(matchedTrack[trackIdx] < 3) continue;
 	 //	 std::cout << " ok " << std::endl;
 
+	 //	 if(nHits != 3 || (nHits != 2 && startLMatchedTrack[trackIdx] < 12)) continue;
+	 //usando solo ultimi 8 layers
+	 if(nHits > matchedTrackLast8L[trackIdx]) continue;
 
+	 //if(trkGeneralPt[iL][iTc] < 10.) continue;
 	 if(trkChi[iL][iTc] > 1.5) continue;
+
+	 float dXerr = trkXerr[iL][iTc];
+	 float dYerr = trkYerr[iL][iTc];	     
+	  
+	 if(matchByID_error){
+           if(dXerr > errorMax[iL] || dYerr > errorMax[iL])
+             continue;
+         }
+
 	 if(matchByID_p009){
 	   float dPhi = std::abs(trkCPhi[iL][iTc] - trkPhi[iL][iTc]);
 	   if(dPhi > pigreco) dPhi -= 2* pigreco;
@@ -641,17 +724,19 @@ int main(){
          if(foundFirstHit.find(trackIdx) == foundFirstHit.end()) foundFirstHit[trackIdx] = false;
 	 //	 if(ij == 148) std::cout << " foundFirstHit.find(trackIdx) = " << foundFirstHit[trackIdx]  << std::endl;
 
-	 float trackY = trkY[iL][iTc];
-         float trkR = sqrt(iT*iT + trackY*trackY);
+	 // float trackY = trkY[iL][iTc];
+         // float trkR = sqrt(iT*iT + trackY*trackY);
 
-         float trkEtaOnLayer = asinh(zVal[iL]/trkR);
+         // float trkEtaOnLayer = asinh(zVal[iL]/trkR);
 
 	 h_MuonCrossK[nHits][iL]->Fill(trkEtaOnLayer); 
+	 if(trkEtaOnLayer > 1.55 && trkEtaOnLayer < 1.7) hDen_etaRange_3H[iL]->Fill(trkEtaOnLayer);
 	 //std::cout << " fill den K iL = " << iL << " trackIdx = " << trackIdx << std::endl;
 
 	 //if(iL < startLMatchedTrack[trackIdx]) continue;
 
          bool alreadyFilled = false;
+	 bool alreadyFilled_3H = false;
          int iRc = -1;
 
 	 int nearestHit = -1;
@@ -672,6 +757,11 @@ int main(){
 	   if(matchByID){
 	     if(rhiR[iL][iRc] != trkiR[iL][iTc] || rhiPhi[iL][iRc] != trkiP[iL][iTc]) continue;
 	   
+	     if(matchByID_error){
+	       if(dXerr > errorMax[iL] || dYerr > errorMax[iL])
+		 continue;
+	     }
+
 	     if(matchByID_p009){
 	       float dPhi = std::abs(trkPhi[iL][iTc] - rhPhi[iL][iRc]);
 	       if(dPhi > pigreco) dPhi -= 2* pigreco;
@@ -679,9 +769,26 @@ int main(){
 		 continue;
 	       }
 	     }
+
+	     float reciR = rhiR[iL][iRc];
+	     std::pair<int, int> channelPhi = std::pair<int, int>(iL, std::abs(reciR));
+	     if(nHits == 3){
+	       if(okChannelsPhi_3H.find(channelPhi) != okChannelsPhi.end()) {
+		 okChannelsPhi_3H[channelPhi] += 1;
+	       }
+	       else {
+		 okChannelsPhi_3H[channelPhi] = 1;
+	       }
+	     }
+
 	     h_MuonNHitK[nHits][iL]->Fill(trkEtaOnLayer);
 	     //std::cout << " fill num K iL = " << iL << " trackIdx = " << trackIdx << std::endl;
 	     
+	     if(trkEtaOnLayer >= 1.55 && trkEtaOnLayer < 1.7){
+               hNum_etaRange_3H[iL]->Fill(trkEtaOnLayer);
+             }
+	     
+
 	     int localBin = h_MuonNHitK[nHits][iL]->GetXaxis()->FindBin(trkEtaOnLayer);
 	     if(h_MuonNHitK[nHits][iL]->GetBinContent(localBin) > h_MuonCrossK[nHits][iL]->GetBinContent(localBin)){
 	       std::cout << " event a = " << ij << std::endl;
@@ -692,13 +799,22 @@ int main(){
 	       std::cout << " event b = " << ij << std::endl;
 	       return 100;
 	     }
+
+             if(nHits == 3){
+	       //here rate for trk with 3 Hits                                                                                                                                                          
+	       if(!alreadyFilled_3H){
+		 nMuons_3H_vsEta[iL]->Fill(std::abs(trkEtaOnLayer));
+		 alreadyFilled_3H = true;
+	       }
+	       mipPerPhi_3H[channelPhi].push_back(rhMip[iL][iRc]);
+	       //	       h_muonSeg_ok->Fill(trkSegC[iL][iTc]);
+	     }
+	     //else if (nHits < 3) h_muonSeg_bad->Fill(trkSegC[iL][iTc]);
 	   }
 	   else if(matchBydR){
 	     float hitTrack_dx = iR - iT;
 	     float hitTrack_dy = recY - trackY;
 	     float hitTrack_dR = sqrt(hitTrack_dx*hitTrack_dx + hitTrack_dy*hitTrack_dy);
-	     float dXerr = trkXerr[iL][iTc];
-	     float dYerr = trkYerr[iL][iTc];	     
 	     float cellSize = sqrt(rhA[iL][iRc]) / 2.;
 
 	     if(std::abs(hitTrack_dx) > cellSize+dXerr || std::abs(hitTrack_dy) > cellSize+dYerr || hitTrack_dR > nearestdR) continue;
@@ -708,6 +824,9 @@ int main(){
 	 }//loop over recHits
 	 if(matchBydR && nearestHit != -1){
 	   h_MuonNHitK[nHits][iL]->Fill(trkEtaOnLayer);
+	   if(trkEtaOnLayer >= 1.55 && trkEtaOnLayer < 1.7){
+             hNum_etaRange_3H[iL]->Fill(trkEtaOnLayer);
+           }
 	 }
        }// trk loop
      }// layer loop
@@ -720,6 +839,15 @@ int main(){
    std::cout << " okChannels.size = " << okChannels.size() << " okChannelPhi.size() = " << okChannelsPhi.size() << std::endl;
    //   return 200;
 
+   TFile pippo("pippo.root", "recreate");
+   pippo.cd();
+   h_muonSeg_ok->Write();
+   h_muonSeg_bad->Write();
+   for(int ij =0 ; ij<14; ++ij) numHits_etaRange[ij]->Write(Form("numHits_etaRange_L%d", ij));
+
+   pippo.Close();
+
+   //   return 10;
 
    /*
    TCanvas* tcM = new TCanvas();
@@ -760,6 +888,9 @@ int main(){
 
       nMuonsPercm2_vsEta_All[ij]->SetBinContent(iB, nMuons_vsEta_All[ij]->GetBinContent(iB)/area);
       ratePercm2_vsEta_All[ij]->SetBinContent(iB, nMuons_vsEta_All[ij]->GetBinContent(iB)/area/timeEqui);
+
+      nMuonsPercm2_3H_vsEta[ij]->SetBinContent(iB, nMuons_3H_vsEta[ij]->GetBinContent(iB)/area);
+      ratePercm2_3H_vsEta[ij]->SetBinContent(iB, nMuons_3H_vsEta[ij]->GetBinContent(iB)/area/timeEqui);
      }
      
      TCanvas* tmuo = new TCanvas();
@@ -786,6 +917,26 @@ int main(){
      cm2_vsEta[ij]->GetYaxis()->SetTitle("cm2");
      cm2_vsEta[ij]->Draw();
      tmuo->Print(Form("plotsMuon_MinBias_correctRate/cm2_vsEta_L%d.png", ij+firstLayer), "png");
+
+     TCanvas* tmuo_3H = new TCanvas();
+     tmuo_3H->cd();
+     nMuonsPercm2_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
+     nMuonsPercm2_3H_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2");
+     nMuonsPercm2_3H_vsEta[ij]->Draw();
+     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");
+     //    tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
+     
+     nMuons_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
+     nMuons_3H_vsEta[ij]->Draw();
+     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/nMuons_3H_vsEta_L%d.png", ij+firstLayer), "png");
+
+     ratePercm2_3H_vsEta[ij]->GetYaxis()->SetRangeUser(0., 0.5);
+     ratePercm2_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
+     ratePercm2_3H_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2 / s");
+     ratePercm2_3H_vsEta[ij]->Draw();
+     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/ratePercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");  
+
+
      
      TCanvas* tmuoAll = new TCanvas();
      tmuoAll->cd();
@@ -807,7 +958,7 @@ int main(){
    }
    
    
-   //   return;
+   //   return 10;
 
    TCanvas* tChi = new TCanvas();
    tChi->cd();
@@ -837,12 +988,12 @@ int main(){
      h_trkP[ij]->Draw();
      tChi->Print(Form("plotsMuon_MinBias_correctRate/h_trkP_L%d.png", ij+firstLayer), "png");
 
+     gPad->SetLogy();
      tChi->cd();
      h_trkPt[ij]->GetXaxis()->SetTitle(Form("track pt on layer %d", ij+firstLayer));
      h_trkPt[ij]->Draw();
      tChi->Print(Form("plotsMuon_MinBias_correctRate/h_trkPt_L%d.png", ij+firstLayer), "png");
 
-     gPad->SetLogy();
      tChi->cd();
      h_dtrkP[ij]->GetXaxis()->SetTitle(Form("dp wrt previous layer (layer %d) (MeV)", ij+firstLayer));
      h_dtrkP[ij]->Draw();
@@ -871,6 +1022,7 @@ int main(){
    //about efficiencies
 
    TGraph* etaRange_eff = new TGraph();
+   TGraph* etaRange_3H_eff = new TGraph();
 
    //   TH1F* Muon1stHit_eff[14]; 
    TH1F* MuonNHit_eff[14];
@@ -945,12 +1097,16 @@ int main(){
        MuonNHitK_eff_tg[kl][ij]->SetPoint(0, 0, 0);
        
      }
-     if(ij == 0) etaRange_eff->SetPoint(0, 0, 0);
+     if(ij == 0) {
+       etaRange_eff->SetPoint(0, 0, 0);
+       etaRange_3H_eff->SetPoint(0, 0, 0);
+     }
      etaRange_eff->SetPoint(etaRange_eff->GetN()+1, ij+firstLayer, hNum_etaRange[ij]->GetBinContent(1)/hDen_etaRange[ij]->GetBinContent(1));
      hNum_etaRange[ij]->Draw();
      tc->Print(Form("plotsMinBias_correctRate/hNum_etaRange_L%d.png", ij+firstLayer), "png");
      hDen_etaRange[ij]->Draw();
      tc->Print(Form("plotsMinBias_correctRate/hDen_etaRange_L%d.png", ij+firstLayer), "png");
+     etaRange_3H_eff->SetPoint(etaRange_3H_eff->GetN()+1, ij+firstLayer, hNum_etaRange_3H[ij]->GetBinContent(1)/hDen_etaRange_3H[ij]->GetBinContent(1));
    }
    etaRange_eff->SetPoint(etaRange_eff->GetN()+1, 60, 1.5);
    TCanvas* tgEta = new TCanvas();
@@ -959,6 +1115,13 @@ int main(){
    etaRange_eff->GetXaxis()->SetRangeUser(30., 55);
    etaRange_eff->Draw("ap");
    tgEta->Print("plotsMinBias_correctRate/tgEta.png", "png");
+
+   etaRange_3H_eff->SetPoint(etaRange_3H_eff->GetN()+1, 60, 1.5);
+   tgEta->cd();
+   etaRange_3H_eff->GetXaxis()->SetTitle("layer");
+   etaRange_3H_eff->GetXaxis()->SetRangeUser(30., 55);
+   etaRange_3H_eff->Draw("ap");
+   tgEta->Print("plotsMinBias_correctRate/tgEta_3H.png", "png");
 
 
    //tg
@@ -1219,6 +1382,22 @@ int main(){
      tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.png", ij+firstLayer), "png");
      tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.root", ij+firstLayer), "root");
 
+     h_dXerr[ij]->GetXaxis()->SetTitle(Form("dXerror (cm) layer %d", ij+firstLayer));
+     h_dXerr[ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.png", ij+firstLayer), "png");
+     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.root", ij+firstLayer), "root");
+     //     h_dRerr[ij]->GetXaxis()->SetRangeUser(0., 0.05);
+     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.png", ij+firstLayer), "png");
+     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.root", ij+firstLayer), "root");
+
+     h_dYerr[ij]->GetXaxis()->SetTitle(Form("dYerror (cm) layer %d", ij+firstLayer));
+     h_dYerr[ij]->Draw();
+     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.png", ij+firstLayer), "png");
+     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.root", ij+firstLayer), "root");
+     //     h_dRerr[ij]->GetXaxis()->SetRangeUser(0., 0.05);
+     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.png", ij+firstLayer), "png");
+     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.root", ij+firstLayer), "root");
+
      // h_dRvsP[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij));
      // h_dRvsP[ij]->GetYaxis()->SetTitle("muon P");
      // h_dRvsP[ij]->Draw("colz");
@@ -1286,6 +1465,24 @@ int main(){
   TH1F* h_minNcounts = new TH1F("h_minNcounts", "", 400, 0., 800.);
   TH1F* h_MPV_values = new TH1F("h_MPV_values", "", 500., 0., 5.);
 
+  TH1F* h2_MIP_vs_Layer = new TH1F("h2_MIP_vs_Layer", "", 15, 36.5, 50.5); //, 500, 0., 5.);
+  TH1F* h_MPV_layer_values = new TH1F("h_MPV_layer_values", "", 500., 0., 5.);
+  TH1F* h_Mip_Layer[14];
+  for(int ij=0; ij<14; ++ij){
+    h_Mip_Layer[ij] = new TH1F(Form("h_Mip_Layer_%d", ij+firstLayer), "", 110, -2., 20.);
+  }
+
+  TH2F* h2_iRvsLayer_MIP_3H = new TH2F("h2_iRvsLayer_MIP_3H", "", 15, 36, 51, 50, 0., 50.);
+  TH1F* h_Mip_Phi_3H[400];
+  TH1F* h_MPV_values_3H = new TH1F("h_MPV_values_3H", "", 500., 0., 5.);
+  TH1F* h2_MIP_vs_Layer_3H = new TH1F("h2_MIP_vs_Layer_3H", "", 15, 36.5, 50.5); //, 500, 0., 5.);
+  TH1F* h_MPV_layer_values_3H = new TH1F("h_MPV_layer_values_3H", "", 500., 0., 5.);
+  TH1F* h_Mip_Layer_3H[14];
+  for(int ij=0; ij<14; ++ij){
+    h_Mip_Layer_3H[ij] = new TH1F(Form("h_Mip_Layer_3H_%d", ij+firstLayer), "", 110, -2., 20.);
+  }
+
+
   int savedCout = 0;
   int iC = -1;
 
@@ -1314,6 +1511,8 @@ int main(){
       else {
 	dummyMIP->Fill(mipPerPhi[ic.first][ij]);
 	++countFilled;
+	//	std::cout << " Filling layer = " << iL << std::endl;
+	h_Mip_Layer[iL]->Fill(mipPerPhi[ic.first][ij]);
       }
     }
     h_Count_Phi->Fill(countFilled);
@@ -1324,7 +1523,7 @@ int main(){
     hfithisto->SetParLimits(0, yMax/2., yMax * 1.2);
     hfithisto->SetParLimits(1, 0., 10.);
     hfithisto->SetParLimits(2, 0., 0.3);
-    std::cout << " histo entries = " << dummyMIP->GetEntries() << std::endl;
+    //std::cout << " histo entries = " << dummyMIP->GetEntries() << std::endl;
     TFitResultPtr r = dummyMIP->Fit("hfithisto", "RBS");
     if(r != 0) continue;
     float meanV = hfithisto->GetParameter(1);
@@ -1376,6 +1575,132 @@ int main(){
       ++savedCout;
     }
   }
+  //3hits
+  savedCout = 0;
+  iC = -1;
+  for(auto ic : okChannelsPhi_3H){
+    ++iC;
+    
+    int iL = ic.first.first;
+    int iR = ic.first.second;
+
+    int iVal = ic.second;
+    std::cout << " iVal = " << iVal << std::endl;
+    //    if(iVal > 500) std::cout << " iL = " << iL << " iR = " << iR << " iPhi = " << iPhi << " iVal = " << iVal << std::endl;
+
+    int rejectedBy1stdR = 0;
+    int rejectedByPrevdR = 0;
+
+    TH1F* dummyMIP = new TH1F("dummyMIP", "", 110, -2., 20.);
+    for(int ij=0; ij<iVal; ++ij){
+      if(mipPerPhi_3H[ic.first].size() != iVal) std::cout << " PROBLEM_3H!!!  " << std::endl;
+      float valueMIP = mipPerPhi_3H[ic.first][ij];
+      if(valueMIP == -1 ) ++rejectedByPrevdR;
+      else if(valueMIP == -2 ) ++rejectedBy1stdR;
+      else {
+	dummyMIP->Fill(mipPerPhi_3H[ic.first][ij]);
+	//	std::cout << " Filling layer = " << iL << std::endl;
+	h_Mip_Layer_3H[iL]->Fill(mipPerPhi_3H[ic.first][ij]);
+      }
+    }
+
+    float yMax;
+    getXmax(dummyMIP, yMax);
+    hfithisto->SetParameters(yMax, 1., 0.1);
+    hfithisto->SetParLimits(0, yMax/2., yMax * 1.2);
+    hfithisto->SetParLimits(1, 0., 10.);
+    hfithisto->SetParLimits(2, 0., 0.3);
+    //std::cout << " histo entries = " << dummyMIP->GetEntries() << std::endl;
+    TFitResultPtr r = dummyMIP->Fit("hfithisto", "RBS");
+    if(r != 0) continue;
+    float meanV = hfithisto->GetParameter(1);
+    delete dummyMIP;
+    if(meanV < 0) continue;
+    h_minNcounts->Fill(iVal);
+    h2_iRvsLayer_MIP_3H->Fill(iL+firstLayer, iR, hfithisto->GetParameter(1));
+    h_MPV_values_3H->Fill(hfithisto->GetParameter(1));
+
+    //    continue;
+    //    if(iVal < 500) continue;
+
+    std::cout << " savedCout = " << savedCout << std::endl;
+    if(savedCout < 400){
+      h_Mip_Phi_3H[savedCout] = new TH1F(Form("h_Mip_Phi_3H_%d_%d", iL, iR), "", 110, -2., 20.);
+      for(int ij=0; ij<iVal; ++ij){
+	float valueMIP = mipPerPhi_3H[ic.first][ij];
+	if(valueMIP >= 0) h_Mip_Phi_3H[savedCout]->Fill(mipPerPhi_3H[ic.first][ij]);
+      }
+      
+      TCanvas* tcM = new TCanvas();
+      tcM->cd();
+
+      h_Mip_Phi_3H[savedCout]->GetXaxis()->SetTitle("MIP");
+      h_Mip_Phi_3H[savedCout]->Draw();
+      hfithisto->SetParameters(yMax, 1., 0.1);
+      hfithisto->SetParLimits(0, yMax/2., yMax * 1.2);
+      hfithisto->SetParLimits(1, 0., 10.);
+      hfithisto->SetParLimits(2, 0., 0.3);
+      h_Mip_Phi_3H[savedCout]->Fit("hfithisto", "RB");
+
+      tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Phi_3H_%d_%d.png", iL+firstLayer, iR), "png");
+      if(iL == 0) tcM->Print(Form("plotsMinBias_correctRate/cells/h_Mip_Phi_3H_%d_%d.root", iL+firstLayer, iR), "root");
+
+      ++savedCout;
+    }
+  }
+
+
+
+  //now fit h_Mip_Layer
+  for(int ij=0; ij<14; ++ij){
+    float yMax;
+    getXmax(h_Mip_Layer[ij], yMax);
+    hfithisto->SetParameters(yMax, 1., 0.1);
+    hfithisto->SetParLimits(0, yMax/2., yMax * 1.2);
+    hfithisto->SetParLimits(1, 0., 10.);
+    hfithisto->SetParLimits(2, 0., 0.3);
+    //std::cout << " histo per layer entries = " << h_Mip_Layer[ij]->GetEntries() << std::endl;
+    TFitResultPtr r = h_Mip_Layer[ij]->Fit("hfithisto", "RBS");
+    if(r != 0) continue;
+    float meanV = hfithisto->GetParameter(1);
+    if(meanV < 0) continue;
+    h2_MIP_vs_Layer->SetBinContent(ij+1, hfithisto->GetParameter(1));
+    h2_MIP_vs_Layer->SetBinError(ij+1, hfithisto->GetParError(1));
+    std::cout << " >> layer = " << ij+firstLayer << " val = " << hfithisto->GetParameter(1) << std::endl;
+    h_MPV_layer_values->Fill(hfithisto->GetParameter(1));
+
+    TCanvas* tcM = new TCanvas();
+    tcM->cd();
+    h_Mip_Layer[ij]->GetXaxis()->SetTitle(Form("MIP layer %d", ij+firstLayer) );
+    h_Mip_Layer[ij]->Draw();
+    tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Layer_%d.png", ij+firstLayer), "png");
+
+    //3hits
+    getXmax(h_Mip_Layer_3H[ij], yMax);
+    hfithisto->SetParameters(yMax, 1., 0.1);
+    hfithisto->SetParLimits(0, yMax/2., yMax * 1.2);
+    hfithisto->SetParLimits(1, 0., 10.);
+    hfithisto->SetParLimits(2, 0., 0.3);
+    //std::cout << " histo per layer entries = " << h_Mip_Layer[ij]->GetEntries() << std::endl;
+    TFitResultPtr r3H = h_Mip_Layer_3H[ij]->Fit("hfithisto", "RBS");
+    if(r3H != 0) continue;
+    meanV = hfithisto->GetParameter(1);
+    if(meanV < 0) continue;
+    h2_MIP_vs_Layer_3H->SetBinContent(ij+1, hfithisto->GetParameter(1));
+    h2_MIP_vs_Layer_3H->SetBinError(ij+1, hfithisto->GetParError(1));
+    std::cout << " >> layer = " << ij+firstLayer << " val = " << hfithisto->GetParameter(1) << std::endl;
+    h_MPV_layer_values_3H->Fill(hfithisto->GetParameter(1));
+
+    //    TCanvas* tcM = new TCanvas();
+    tcM->cd();
+    h_Mip_Layer_3H[ij]->GetXaxis()->SetTitle(Form("MIP layer %d", ij+firstLayer) );
+    h_Mip_Layer_3H[ij]->Draw();
+    tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Layer_3H_%d.png", ij+firstLayer), "png");
+
+
+
+  }
+
 
 
   TF1* hfit = new TF1("hfit", "gaus", 0., 2.);
@@ -1386,6 +1711,25 @@ int main(){
   h_MPV_values->Draw();
   h_MPV_values->Fit("hfit", "R");
   tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_values.png", "png");
+
+  hfit->SetParameters(h_MPV_layer_values->GetEntries()/2., 1, 0.02);
+  h_MPV_layer_values->GetXaxis()->SetTitle("MPV values for layers");
+  h_MPV_layer_values->Draw();
+  h_MPV_layer_values->Fit("hfit", "R");
+  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_layer_values.png", "png");
+
+  hfit->SetParameters(h_MPV_values_3H->GetEntries()/2., 1, 0.02);
+  h_MPV_values_3H->GetXaxis()->SetTitle("MPV values (3hits)");
+  h_MPV_values_3H->Draw();
+  h_MPV_values_3H->Fit("hfit", "R");
+  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_values_3H.png", "png");
+
+  hfit->SetParameters(h_MPV_layer_values_3H->GetEntries()/2., 1, 0.02);
+  h_MPV_layer_values_3H->GetXaxis()->SetTitle("MPV values for layers (3hits)");
+  h_MPV_layer_values_3H->Draw();
+  h_MPV_layer_values_3H->Fit("hfit", "R");
+  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_layer_values_3H.png", "png");
+
 
   gPad->SetLogy();
   tcC_Phi->cd();
@@ -1406,6 +1750,31 @@ int main(){
   h2_iRvsLayer_MIP->Draw("colz");
   tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP.png", "png");
   tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP.root", "root");
+
+  tcC2_Phi->cd();
+  h2_MIP_vs_Layer->GetXaxis()->SetTitle("layer");
+  h2_MIP_vs_Layer->GetYaxis()->SetTitle("MIP");
+  h2_MIP_vs_Layer->GetYaxis()->SetRangeUser(0.8, 1.2);
+  h2_MIP_vs_Layer->Draw();
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer.png", "png");
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer.root", "root");
+
+  tcC2_Phi->cd();
+  h2_iRvsLayer_MIP_3H->GetXaxis()->SetTitle("layer");
+  h2_iRvsLayer_MIP_3H->GetYaxis()->SetTitle("iR");
+  h2_iRvsLayer_MIP_3H->GetZaxis()->SetRangeUser(0., 3.);
+  h2_iRvsLayer_MIP_3H->Draw("colz");
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP_3H.png", "png");
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP_3H.root", "root");
+
+
+  tcC2_Phi->cd();
+  h2_MIP_vs_Layer_3H->GetXaxis()->SetTitle("layer");
+  h2_MIP_vs_Layer_3H->GetYaxis()->SetTitle("MIP");
+  h2_MIP_vs_Layer_3H->GetYaxis()->SetRangeUser(0.8, 1.2);
+  h2_MIP_vs_Layer_3H->Draw();
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer_3H.png", "png");
+  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer_3H.root", "root");
 
 
 
