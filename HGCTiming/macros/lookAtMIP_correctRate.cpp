@@ -1,9 +1,4 @@
 //g++  -o lookAtMIP_correctRate  lookAtMIP_correctRate.cpp `root-config --cflags --libs`
-//example to run 
-//photon (PDG 22) - kaon 0 long (PDG 130)
-//optionType is th einput folder with the produced .root
-//
-//root -l doPlots_fitTiming.C'("22", "TDRset_0PU_allEta")
 
 #include "TLegend.h"
 #include "TLatex.h"
@@ -61,35 +56,18 @@ int main(){
   std::cout << " inizio ci sono " << std::endl; 
 
   
-  //  int iColors[16] = {kRed, kOrange+4, kOrange-3, kOrange-2, kBlue, kBlue-9, kAzure-9, kAzure+10, kCyan, kGreen+1, kCyan-2, kYellow+2}; //kGray+1};
   int iColors[14] = {kBlack, kGray+1, kGreen+1, kSpring-2, kYellow+1, kOrange-2, kRed+1, kPink-2, kMagenta+1, kViolet-2, kBlue+1, kAzure-2, kCyan+1, kTeal-2};
   int iStyle[4] = {20, 21, 22, 23}; //kGray+1};
-  //  int iColors[6] = {kGreen+1, kBlue, kRed};
-  
-  //  TFile* inF = TFile::Open("../test/singleMuon_newGun.root");
-  //  TFile* inF = TFile::Open("../test/testMinBias.root");
 
-  // TFile* inF = TFile::Open("../test/MinBias140PU_0.root");
-
-  //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_vArea.root");
-  //  TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_vGoodM.root");
-
-
-  //  TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_vGlbMt.root");
-  //  TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_vdetID.root");
-  //  TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_vdetID_vMat.root");
-
-
-  //TFile* inF = TFile::Open("../test/singleMuon_D49.root");
   //TFile* inF = TFile::Open("../test/singleMuon_D49_newEloss.root"); // pT 20GeV
-  //  TFile* inF = TFile::Open("../test/singleMuon_Pt5_D49_newEloss.root");
+  //TFile* inF = TFile::Open("../test/singleMuon_Pt5_D49_newEloss.root");
   //TFile* inF = TFile::Open("../test/singleMuon_Pt10_D49_newEloss.root");
-  //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_withNewMB_pt4Cut_eLoss.root");
+
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt10.root");
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt15.root");
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt5.root");
 
-  TFile* inF = TFile::Open("/eos/cms/store/group/dpg_hgcal/comm_hgcal/amartell/Scint2021/singleMuonGun/ntupleSoN/singleMuon_SoN4.root");
+  TFile* inF = TFile::Open("/eos/cms/store/group/dpg_hgcal/comm_hgcal/amartell/Scint2021/singleMuonGun/ntupleSoN/singleMuon_SoN3.root");
 
   //config
   int firstLayer = 37;
@@ -111,7 +89,8 @@ int main(){
   TTree* newT = (TTree*)inF->Get("ana/newT");
   std::vector<float> *muonP = 0;
   std::vector<float> *muonPt = 0;
-  std::vector<float> *muonSegC = 0;
+  //only with pat muons if enabled
+  //  std::vector<float> *muonSegC = 0;
   std::vector<float> *muonEta = 0;
   std::vector<float> *muonPhi = 0;
   std::vector<float> *crossX = 0;
@@ -386,7 +365,6 @@ int main(){
        //only  in latest pT 5
        //       trkSegC[trkL].push_back(muonSegC->at(iM));
        trkGeneralPt[trkL].push_back(muonPt->at(iM));
-       // trkP[trkL].push_back(muonP->at(iM));
        trkChi[trkL].push_back(muonChi->at(iM));
        trkQ[trkL].push_back(muonTrkQ->at(iM));
        if(trkL == 0){
@@ -681,7 +659,6 @@ int main(){
 
 	 float trackY = trkY[iL][iTc];
          float trkR = sqrt(iT*iT + trackY*trackY);
-
          float trkEtaOnLayer = asinh(zVal[iL]/trkR);
 
 	 if(trkEtaOnLayer > 1.55 && trkEtaOnLayer < 1.7 && matchedTrack[trackIdx] != 0) numHits_etaRange[iL]->Fill(matchedTrack[trackIdx]);
@@ -699,8 +676,7 @@ int main(){
 	 if(matchedTrack[trackIdx] < 3) continue;
 	 //	 std::cout << " ok " << std::endl;
 
-	 //	 if(nHits != 3 || (nHits != 2 && startLMatchedTrack[trackIdx] < 12)) continue;
-	 //usando solo ultimi 8 layers
+	 //just using the back 8 layers
 	 if(nHits > matchedTrackLast8L[trackIdx]) continue;
 
 	 //if(trkGeneralPt[iL][iTc] < 10.) continue;
@@ -722,12 +698,6 @@ int main(){
 	   }
 	 }
          if(foundFirstHit.find(trackIdx) == foundFirstHit.end()) foundFirstHit[trackIdx] = false;
-	 //	 if(ij == 148) std::cout << " foundFirstHit.find(trackIdx) = " << foundFirstHit[trackIdx]  << std::endl;
-
-	 // float trackY = trkY[iL][iTc];
-         // float trkR = sqrt(iT*iT + trackY*trackY);
-
-         // float trkEtaOnLayer = asinh(zVal[iL]/trkR);
 
 	 h_MuonCrossK[nHits][iL]->Fill(trkEtaOnLayer); 
 	 if(trkEtaOnLayer > 1.55 && trkEtaOnLayer < 1.7) hDen_etaRange_3H[iL]->Fill(trkEtaOnLayer);
@@ -831,13 +801,10 @@ int main(){
        }// trk loop
      }// layer loop
 
-     //     if(ij == 148) std::cout << " looping nHits = " << nHits <<std::endl;
      }// loop on nhits
    }// events;
 
-   //   return 5;
    std::cout << " okChannels.size = " << okChannels.size() << " okChannelPhi.size() = " << okChannelsPhi.size() << std::endl;
-   //   return 200;
 
    TFile pippo("pippo.root", "recreate");
    pippo.cd();
@@ -847,34 +814,8 @@ int main(){
 
    pippo.Close();
 
-   //   return 10;
 
-   /*
-   TCanvas* tcM = new TCanvas();
-   tcM->cd();
-   mipAll->Draw();
-   tcM->Print("plotsMinBias_correctRate/cellsPhi/mipAll.png", "png");
-   tcM->Print("plotsMinBias_correctRate/cellsPhi/mipAll.root", "root");
-
-   dX_wrt1st->GetXaxis()->SetTitle("dX hits wrt 1st layer");
-   dX_wrt1st->Draw();
-   tcM->Print("plotsMinBias_correctRate/x1stHit.png", "png");
-
-   dY_wrt1st->GetXaxis()->SetTitle("dY hits wrt 1st layer");
-   dY_wrt1st->Draw();
-   tcM->Print("plotsMinBias_correctRate/y1stHit.png", "png");
-
-   dX_wrtPrev->GetXaxis()->SetTitle("dX hits wrt previous layer");
-   dX_wrtPrev->Draw();
-   tcM->Print("plotsMinBias_correctRate/xPrevHit.png", "png");
-
-   dY_wrtPrev->GetXaxis()->SetTitle("dY hits wrt previous layer");
-   dY_wrtPrev->Draw();
-   tcM->Print("plotsMinBias_correctRate/yPrevHit.png", "png");
-   */
-   
-   //   return;
-
+   //rates
    for(int ij=0; ij<14; ++ij){
      float binW = (4. - 0. ) / 400.;
      for(int iB=2; iB<nMuonsPercm2_vsEta[ij]->GetNbinsX()-1; ++iB){
@@ -1016,25 +957,24 @@ int main(){
    tMuo->Print("plotsMuon_MinBias_correctRate/ptMuon_all_L37.root", "root");
    //   }
 
-   //   if(1 == 2){
-   //return;
+
 
    //about efficiencies
-
    TGraph* etaRange_eff = new TGraph();
    TGraph* etaRange_3H_eff = new TGraph();
 
-   //   TH1F* Muon1stHit_eff[14]; 
+   /*
    TH1F* MuonNHit_eff[14];
    TH1F* MuonNHitK_eff[14][14];
 
    TGraph* MuonNHit_eff_tg[14];
    TGraph* MuonNHitK_eff_tg[14][14];
-
+   */
    for(int ij=0; ij<14; ++ij){
      TCanvas* tc = new TCanvas();
      tc->cd();
 
+     /*
      h_MuonCross[ij]->Rebin(4);
      h_MuonNHit[ij]->Rebin(4);
 
@@ -1061,25 +1001,6 @@ int main(){
      MuonNHit_eff_tg[ij]->SetPoint(0, 0, 0);
 
 
-     // h_MuonNHitK[5][ij]->GetYaxis()->SetTitle("muon N hits");
-     // h_MuonNHitK[5][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-     // h_MuonNHitK[5][ij]->Draw();
-     // tc->Print(Form("plotsMinBias_correctRate/h_MuonNHitK_L%d_N5.png", ij+firstLayer), "png");
-
-     // h_MuonNHitK[13][ij]->GetYaxis()->SetTitle("muon N hits");
-     // h_MuonNHitK[13][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-     // h_MuonNHitK[13][ij]->Draw();
-     // tc->Print(Form("plotsMinBias_correctRate/h_MuonNHitK_L%d_N13.png", ij+firstLayer), "png");
-
-
-     // Muon1stHit_eff[ij] = (TH1F*)h_Muon1stHit[ij]->Clone(Form("Muon1stHit_eff_%d", ij+firstLayer));
-     // Muon1stHit_eff[ij]->Reset();
-     // Muon1stHit_eff[ij]->Divide(h_Muon1stHit[ij], h_MuonCross[ij]);
-     // Muon1stHit_eff[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-     // Muon1stHit_eff[ij]->GetYaxis()->SetTitle("purity (finding 1 hit)");
-     // Muon1stHit_eff[ij]->Draw();
-     // tc->Print(Form("plotsMinBias_correctRate/Muon1stHit_eff_L%d.png", ij+firstLayer), "png");
-
      for(int kl=0; kl<14; ++kl){
        h_MuonNHitK[kl][ij]->Rebin(4);
        h_MuonCrossK[kl][ij]->Rebin(4);
@@ -1097,6 +1018,8 @@ int main(){
        MuonNHitK_eff_tg[kl][ij]->SetPoint(0, 0, 0);
        
      }
+     */
+
      if(ij == 0) {
        etaRange_eff->SetPoint(0, 0, 0);
        etaRange_3H_eff->SetPoint(0, 0, 0);
@@ -1125,6 +1048,7 @@ int main(){
 
 
    //tg
+   /*
    for(int iB=1; iB<MuonNHit_eff[0]->GetNbinsX(); ++iB){
      int maxLayer = 0;
      float effMax = 0;
@@ -1320,10 +1244,11 @@ int main(){
    tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_N%02d.png", kl), "png");
    tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_N%02d.root", kl), "root");
    }
-   
-   //   return 20;
+   */
 
 
+
+   //topological plots
    gStyle->SetOptStat(1);
    for(int ij=0; ij<14; ++ij){
      TCanvas* tc = new TCanvas();
@@ -1398,11 +1323,6 @@ int main(){
      tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.png", ij+firstLayer), "png");
      tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.root", ij+firstLayer), "root");
 
-     // h_dRvsP[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij));
-     // h_dRvsP[ij]->GetYaxis()->SetTitle("muon P");
-     // h_dRvsP[ij]->Draw("colz");
-     // tc->Print(Form("plotsMinBias_correctRate/h_dRvsdP_L%d.png", ij), "png");
-
      h2_dR_vsChi[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij));
      h2_dR_vsChi[ij]->GetYaxis()->SetTitle("muon trk chi2");
      h2_dR_vsChi[ij]->Draw("colz");
@@ -1443,8 +1363,9 @@ int main(){
      tc2->Print(Form("plotsMinBias_correctRate/h2_iR_vsR_L%d.png", ij+firstLayer), "png");
 
    }
-   //}//1==2
 
+
+   //now fitting the MIP peaks
 
    TLatex tL;
    tL.SetNDC();
