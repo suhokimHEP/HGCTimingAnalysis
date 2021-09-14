@@ -1,3 +1,5 @@
+//g++  -o fitMIP  fitMIP.cpp `root-config --cflags --glibs`
+
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -22,6 +24,16 @@
 #include "TMultiGraph.h"
 #include "TStyle.h"
 #include "TChain.h"
+#include "TPaveStats.h"
+
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RVec.hxx>
+#include <iostream>
+#include <string>
+#include "TStopwatch.h"
+#include <vector>
+#include <ROOT/RDF/RInterface.hxx>
+#include <ROOT/RDF/InterfaceUtils.hxx>
 
 #include "RooRealVar.h"
 #include "RooDataSet.h"
@@ -40,10 +52,10 @@
 #include "RooPlot.h"
 
 using namespace RooFit;
-using namespace ROOT::VecOps;
+//using namespace ROOT::VecOps;
 
 void fitMIP(){
-
+  //int main(){
   gROOT->Reset();
   gROOT->Macro("~/public/setStyle.C");
 
@@ -55,7 +67,7 @@ void fitMIP(){
   RooRealVar x("x", "", 0.5, 10.5);
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
-  std::string inputFileList = "outMIP_SoN4.root";
+  std::string inputFileList = "outMIP_SoN2p5.root";
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
     //ROOT::RDataFrame d("MIPtree", "outMIP_SoN4.root");
   auto allMIP = d.Histo1D( {"allMIP", "", 120, 0.5, 10.5}, "MIP_val");
@@ -75,9 +87,8 @@ void fitMIP(){
   w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.1, 0.01, 0.5])");
   w.factory("RooFFTConvPdf::lxg(x, landau, gauss)");
 
-  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.01, 0.001, 0.1])");
+  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.5, 0.01, 1.])");
   w.factory("SUM::model(nNoise * gaussB, nSig* lxg)");
-  //w.factory("SUM::model(nBkg * gaussB, nSig* landau)");
   RooAbsPdf * model = w.pdf("model");
 
 
@@ -142,7 +153,8 @@ void fitMIP(){
 
 
 
-  for(int ij_L=min_iL; ij_L < max_iL; ++ij_L){
+  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  //  for(int ij_L=11; ij_L < max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
@@ -150,57 +162,18 @@ void fitMIP(){
     auto min_iR = radiiForLayer.Min("MIP_iR").GetValue();
     auto max_iR = radiiForLayer.Max("MIP_iR").GetValue();
 
-    for(int ij_R=min_iR; ij_R < max_iR; ++ij_R){
+    for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
       std::cout << " fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
       //auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                                                
       //auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val"); 
       // iR_vs_layer->Fill(ij_L, ij_R, mipH->GetEntries());
 
 
-      auto filterMinMAx = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };
-      auto phiForLayerRadii = d.Filter(filterMinMAx, {"MIP_layer", "MIP_iR"});
-      auto min_iPhi = phiForLayerRadii.Min("MIP_iPhi").GetValue();
-      auto max_iPhi = phiForLayerRadii.Max("MIP_iPhi").GetValue();
+      // auto filterMinMAx = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };
+      // auto phiForLayerRadii = d.Filter(filterMinMAx, {"MIP_layer", "MIP_iR"});
+      // auto min_iPhi = phiForLayerRadii.Min("MIP_iPhi").GetValue();
+      // auto max_iPhi = phiForLayerRadii.Max("MIP_iPhi").GetValue();
 
-      /*
-      for(int ij_P=min_iPhi; ij_P < max_iPhi; ++ij_P){	
-	std::cout << " fitting for layer = " << ij_L << " ring = " << ij_R << " phi = " << ij_P << std::endl;
-
-	//RA FIXME LAMBDA
-	auto filterSel = [ij_P, ij_L, ij_R](int pval, int lval, int rval) { return (ij_P == pval && ij_L == lval && ij_R == rval); }; 
-	auto mipH = d.Filter(filterSel, {"MIP_iPhi", "MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
-	if(mipH->GetEntries() == 0) continue;
-
-	RooDataHist locData("locData","locData", xL, Import(*(mipH)) );
-
-	//fit and save
-	RooFitResult * rJL = modelL->fitTo(locData, Minimizer("Minuit2"),Save(true));
-	auto fittedVal = w.var("m_landau_l")->getVal();
-	MIP_values_layer_ring_phi->Fill(fittedVal);
-
-
-	RooPlot* frameL = xL.frame();
-	frameL->SetXTitle("MIP values");
-	locData.plotOn(frameL, Binning(120));
-	modelL->plotOn(frameL, LineColor(kBlue));
-	modelL->plotOn(frameL, Components("lxgL"), LineColor(kRed+1));
-	modelL->paramOn(frameL, RooFit::Layout(0.6,0.8,0.9),RooFit::Format("NEA",AutoPrecision(1)));
-	frameL->getAttLine()->SetLineColorAlpha(kWhite, 0.2);
-	frameL->getAttText()->SetTextSize(0.03);
-	frameL->getAttText()->SetTextFont(42);
-
-	TCanvas* cL = new TCanvas();
-	cL->cd();
-	frameL->Draw();
-	cL->Print("Form(singleFits/mip_L%d_R%d_P%d.png, ij_L+firstLayer, ij_R, ij_P)", "png");
-
-	float chi2_JL = frameL->chiSquare();
-
-	std::cout << " chi2_JL  = " << chi2_JL << std::endl;
-
-	std::cout << "\n ij_L = " << ij_L << " ij_R = " << ij_R << " ij_P = " << ij_P << std::endl;
-      }
-      */
       
       auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
       auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
@@ -212,8 +185,8 @@ void fitMIP(){
       RooFitResult * rJL = modelL->fitTo(locData, Minimizer("Minuit2"),Save(true));
       auto fittedVal = w.var("m_landau_l")->getVal();
       MIP_values_layer_ring->Fill(fittedVal);
-      auto fittedValError = w.var("s_landau_l")->getVal();
-      MIPerror_vs_nEntries_layer_ring->SetPoint(MIPerror_vs_nEntries_layer_ring->GetN(), nEntries, fittedValError);
+      auto fittedValError = w.var("m_landau_l")->getError();
+      MIPerror_vs_nEntries_layer_ring->SetPoint(MIPerror_vs_nEntries_layer_ring->GetN(), nEntries, fittedValError*100.);
 
       RooPlot* frameL = xL.frame();                                                                                                                            
       frameL->SetXTitle("MIP values");                                                                                                                         
@@ -234,73 +207,45 @@ void fitMIP(){
       delete frameL;
       //delete mipH;
     }
-    /*
-    auto filterSel = [ij_L](int lval) { return (ij_L == lval); };  
-    auto mipH = d.Filter(filterSel, {"MIP_layer"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val"); 
-    RooDataHist locData("locData","locData", xL, Import(*(mipH)) ); 
-    
- 
-    //fit and save  
-    RooFitResult * rJL = modelL->fitTo(locData, Minimizer("Minuit2"),Save(true)); 
-    auto fittedVal = w.var("m_landau_l")->getVal();
-    std::cout << " fittedVal = " << fittedVal << std::endl;
-    MIP_values_layer->Fill(fittedVal);
-    
-    RooPlot* frameL = xL.frame();
-    frameL->SetXTitle("MIP values");
-    locData.plotOn(frameL, Binning(120));
-    modelL->plotOn(frameL, LineColor(kBlue)); 
-    modelL->plotOn(frameL, Components("lxgL"), LineColor(kRed+1)); 
-    modelL->paramOn(frameL, RooFit::Layout(0.6,0.8,0.9),RooFit::Format("NEA",AutoPrecision(1))); 
-    frameL->getAttLine()->SetLineColorAlpha(kWhite, 0.2); 
-    frameL->getAttText()->SetTextSize(0.03); 
-    frameL->getAttText()->SetTextFont(42); 
-    
-    TCanvas* cL = new TCanvas(); 
-    cL->cd();
-    frameL->Draw();
-    cL->Print(Form("singleFits/mip_L%d.png", ij_L+firstLayer), ".png");
-    */
   }
+
+
+  TLatex tL;
+  tL.SetNDC();
+  tL.SetTextSize(0.05);
+  tL.SetTextFont(132);
 
   gStyle->SetOptStat(1);
   gStyle->SetOptFit(1);
   TF1* hfit_layer = new TF1("hfit_layer", "gaus", 0., 2.);
+
   TCanvas* tc_fitVal = new TCanvas();
   tc_fitVal->cd();
-  /*
-  hfit_layer->SetParameters(MIP_values_layer->GetEntries()/2., 1, 0.02);
-  MIP_values_layer->GetXaxis()->SetTitle("MPV values for layers");
-  MIP_values_layer->Draw();
-  MIP_values_layer->Fit("hfit_layer", "R");
-  tc_fitVal->Print("MIP_values_layer.png", "png");
-  */
-
-  gStyle->SetOptStat(1);
-  gStyle->SetOptFit(1);
-  
   hfit_layer->SetParameters(MIP_values_layer_ring->GetEntries()/2., 1, 0.02);
   MIP_values_layer_ring->GetXaxis()->SetTitle("MPV values for layers and rings");
   MIP_values_layer_ring->Draw();
-  gStyle->SetOptStat(1);
-  gStyle->SetOptFit(1);
   MIP_values_layer_ring->Fit("hfit_layer", "R");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, Form("mean = %.2f +/- %.2f", hfit_layer->GetParameter(1), hfit_layer->GetParError(1)));
+  tL.DrawLatex(0.5, 0.7, Form("sigma = %.2f +/- %.2f", hfit_layer->GetParameter(2), hfit_layer->GetParError(2)));
   tc_fitVal->Print("MIP_values_layer_ring.png", "png");
-  /*
-  hfit_layer->SetParameters(MIP_values_layer_ring_phi->GetEntries()/2., 1, 0.02);
-  MIP_values_layer_ring_phi->GetXaxis()->SetTitle("MPV values for tile");
-  MIP_values_layer_ring_phi->Draw();
-  MIP_values_layer_ring_phi->Fit("hfit_layer", "R");
-  tc_fitVal->Print("MIP_values_layer_ring_phi.png", "png");
-  */
+
+  TF1* hfit_precision = new TF1("hfit_precision", "[0]/sqrt(x) + [1]", 0., 500.);
+  hfit_precision->SetParameter(1, 0.01);
+  hfit_precision->SetParameter(0, 0.5);
 
   TCanvas* tc_scatter = new TCanvas();
   tc_scatter->cd();
   MIPerror_vs_nEntries_layer_ring->Sort();
-  MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTilte("nEntries");
-  MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTilte("precision");
+  MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
+  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
   MIPerror_vs_nEntries_layer_ring->Draw("ap");
-  tc_scatter->Print("MIPerror_vs_nEntries_layer_ring.ring", "png");
+  MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
+  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
+  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
+  tc_scatter->Print("MIPerror_vs_nEntries_layer_ring.png", "png");
 
   /*
   TCanvas* tc_occu = new TCanvas();

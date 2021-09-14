@@ -61,13 +61,13 @@ int main(){
 
   //TFile* inF = TFile::Open("../test/singleMuon_D49_newEloss.root"); // pT 20GeV
   //TFile* inF = TFile::Open("../test/singleMuon_Pt5_D49_newEloss.root");
-  //TFile* inF = TFile::Open("../test/singleMuon_Pt10_D49_newEloss.root");
+  //TFile* inF = TFile::Open("../../../../../CMSSW_11_3_0_pre6/src/HGCTimingAnalysis/HGCTiming/test/singleMuon_Pt10_D49_newEloss.root");
 
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt10.root");
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt15.root");
   //TFile* inF = TFile::Open("/tmp/amartell/MinBias_PU140_pt5.root");
 
-  TFile* inF = TFile::Open("/eos/cms/store/group/dpg_hgcal/comm_hgcal/amartell/Scint2021/singleMuonGun/ntupleSoN/singleMuon_SoN3.root");
+  TFile* inF = TFile::Open("/eos/cms/store/group/dpg_hgcal/comm_hgcal/amartell/Scint2021/singleMuonGun/ntupleSoN/singleMuon_SoN2p5.root");
 
   //config
   int firstLayer = 37;
@@ -168,6 +168,8 @@ int main(){
   std::map<std::pair<int, int>, std::vector<float> > mipPerPhi;
   std::map<std::pair<int, int>, float > okChannelsPhi_3H;
   std::map<std::pair<int, int>, std::vector<float> > mipPerPhi_3H;
+  std::map<std::pair<int, std::pair<int, int> >, float > okChannels_3H;
+  std::map<std::pair<int, std::pair<int, int> >, std::vector<float> > mipPerRh_3H;
 
   TH1F* mipAll = new TH1F("mipAll", "", 80, -1., 19.);
   TH2F* h2_YvsX[14];
@@ -748,6 +750,16 @@ int main(){
 	       }
 	       else {
 		 okChannelsPhi_3H[channelPhi] = 1;
+	       }
+	       std::pair<int, int> channelRh = std::pair<int, int>(reciR, rhiPhi[iL][iRc]);
+	       std::pair<int, std::pair<int, int>> channelRh_L = std::pair<int, std::pair<int, int>>(iL, channelRh);
+	       if(okChannels_3H.find(channelRh_L) != okChannels_3H.end()) {
+		 okChannels_3H[channelRh_L] += 1;
+		 mipPerRh_3H[channelRh_L].push_back(rhMip[iL][iRc]); 
+	       }
+	       else {
+		 okChannels_3H[channelRh_L] = 1;
+		 mipPerRh_3H[channelRh_L].push_back(rhMip[iL][iRc]); 
 	       }
 	     }
 
@@ -1496,6 +1508,45 @@ int main(){
       ++savedCout;
     }
   }
+
+  TFile outMIP("outMIP.root", "recreate");
+  TTree* tt = new TTree("MIPtree", "MIPtree");
+  Float_t MIP_val;
+  Int_t MIP_layer; 
+  Int_t MIP_iR;
+  Int_t MIP_iPhi;
+  Float_t MIP_SoN;
+  tt->Branch("MIP_layer", &MIP_layer, "MIP_layer/I");
+  tt->Branch("MIP_iR", &MIP_iR, "MIP_iR/I");
+  tt->Branch("MIP_iPhi", &MIP_iPhi, "MIP_iPhi/I");
+  tt->Branch("MIP_SoN", &MIP_SoN, "MIP_SoN/F");
+  tt->Branch("MIP_val", &MIP_val, "MIP_val/F");
+
+  int iCounts = -1;
+  for(auto ic : okChannels_3H){
+    ++iCounts;
+
+    int iL = ic.first.first;
+    int iR = ic.first.second.first;
+    int iP = ic.first.second.second;
+    int iVal = ic.second;
+    for(int ij=0; ij<iVal; ++ij){
+      if(mipPerRh_3H[ic.first].size() != iVal) std::cout << " PROBLEM_MIP_3H!!!  " << std::endl;
+      std::cout << " iL = " << iL << " iR = " << iR << " iPhi = " << iP << " MIP = " << mipPerRh_3H[ic.first][ij] << std::endl;
+      MIP_layer = iL;
+      MIP_iR = iR;
+      MIP_iPhi = iP;
+      MIP_val = mipPerRh_3H[ic.first][ij];
+      MIP_SoN = 2.5;
+      tt->Fill();
+    }
+  }
+
+  tt->Write();
+  outMIP.Close();
+
+
+
   //3hits
   savedCout = 0;
   iC = -1;
