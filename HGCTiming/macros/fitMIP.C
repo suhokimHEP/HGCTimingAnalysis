@@ -11,6 +11,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1F.h"
+#include "TProfile.h"
 #include "TH2F.h"
 #include "TF1.h"
 #include "TString.h"
@@ -67,7 +68,7 @@ void fitMIP(){
   RooRealVar x("x", "", 0.5, 10.5);
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
-  std::string inputFileList = "outMIP_SoN2p5.root";
+  std::string inputFileList = "outMIP_SoN2.root";
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
     //ROOT::RDataFrame d("MIPtree", "outMIP_SoN4.root");
   auto allMIP = d.Histo1D( {"allMIP", "", 120, 0.5, 10.5}, "MIP_val");
@@ -83,11 +84,11 @@ void fitMIP(){
   w.factory("nNoise[10, 0, 1.e4]"); 
   w.factory("nSig[1.e5, 0.0, 1.e6]");   
 
-  w.factory("RooLandau::landau(x, m_landau[1.1, 0.5, 5.], s_landau[0.2, 0.01, 0.2])");
-  w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.1, 0.01, 0.5])");
+  w.factory("RooLandau::landau(x, m_landau[1.1, 0.5, 5.], s_landau[0.2, 0.01, 0.5])");
+  w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.1, 0.01, 1.])");
   w.factory("RooFFTConvPdf::lxg(x, landau, gauss)");
 
-  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.5, 0.01, 1.])");
+  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.5, 0.01, 2.])");
   w.factory("SUM::model(nNoise * gaussB, nSig* lxg)");
   RooAbsPdf * model = w.pdf("model");
 
@@ -122,13 +123,10 @@ void fitMIP(){
   w.factory("nNoise_l[10, 0, 1.e4]"); 
   w.factory("nSig_l[1.e5, 0.0, 1.e6]");   
 
-  w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.2])");
-  //  w.var("m_gauss")->setConstant();
-  //  w.var("s_gauss")->setConstant();
+  w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.5])");
   w.var("m_gaussNoise")->setConstant();
   w.var("s_gaussNoise")->setConstant();
-  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 0.5])");
-  //  w.factory("RooGaussian::gaussL(xL, m_gauss, s_gauss)");
+  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 1.])");
   w.factory("RooFFTConvPdf::lxgL(xL, landauL, gaussL)");
   w.factory("RooGaussian::gaussBL(xL, m_gaussNoise, s_gaussNoise)");
   w.factory("SUM::modelL(nNoise_l * gaussBL, nSig_l* lxgL)");
@@ -137,21 +135,28 @@ void fitMIP(){
   TH1F* MIP_values_layer = new TH1F("MIP_values_layer", "", 500, 0., 5.);
   TH1F* MIP_values_layer_ring = new TH1F("MIP_values_layer_ring", "", 500, 0., 5.);
   TGraph* MIPerror_vs_nEntries_layer_ring = new TGraph();
+  TProfile* tp_MIPerror_vs_nEntries_layer_ring = new TProfile("tp_MIPerror_vs_nEntries_layer_ring", "", 400, 0., 400);
   TH1F* MIP_values_layer_ring_phi = new TH1F("MIP_values_layer_ring_phi", "", 500, 0., 5.);
   TH2F* iR_vs_layer = new TH2F("iR_vs_layer", "", 14, 0., 13, 75, -37, 37.);
 
   auto min_iL = d.Min("MIP_layer").GetValue();
   auto max_iL = d.Max("MIP_layer").GetValue();
-  auto min_iR_all = d.Min("MIP_iR").GetValue();
-  auto max_iR_all = d.Max("MIP_iR").GetValue();
-  auto min_iPhi_all = d.Min("MIP_iPhi").GetValue();
-  auto max_iPhi_all = d.Max("MIP_iPhi").GetValue();
+  // auto min_iR_all = d.Min("MIP_iR").GetValue();
+  // auto max_iR_all = d.Max("MIP_iR").GetValue();
+  // auto min_iPhi_all = d.Min("MIP_iPhi").GetValue();
+  // auto max_iPhi_all = d.Max("MIP_iPhi").GetValue();
 
-  std::cout << " min_iR = " << min_iR_all << " max_iR = " << max_iR_all 
-	    << " min_iL = " << min_iL << " max_iL = " << max_iL 
-	    << " min_iPhi = " << min_iPhi_all << " max_iPhi = " << max_iPhi_all << std::endl;
+  // std::cout << " min_iR = " << min_iR_all << " max_iR = " << max_iR_all 
+  // 	    << " min_iL = " << min_iL << " max_iL = " << max_iL 
+  // 	    << " min_iPhi = " << min_iPhi_all << " max_iPhi = " << max_iPhi_all << std::endl;
 
 
+  std::vector<int> minEvents;
+  minEvents.push_back(20);
+  minEvents.push_back(50);
+  minEvents.push_back(100);
+  minEvents.push_back(300);
+  int minESize = minEvents.size();
 
   for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
   //  for(int ij_L=11; ij_L < max_iL; ++ij_L){
@@ -159,11 +164,12 @@ void fitMIP(){
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
     auto radiiForLayer = d.Filter(filterMinMAx, {"MIP_layer"});
-    auto min_iR = radiiForLayer.Min("MIP_iR").GetValue();
-    auto max_iR = radiiForLayer.Max("MIP_iR").GetValue();
+    auto absRadiiForLayer = radiiForLayer.Define("abs_MIP_iR", "std::abs(MIP_iR)");
+    auto min_iR = absRadiiForLayer.Min("abs_MIP_iR").GetValue();
+    auto max_iR = absRadiiForLayer.Max("abs_MIP_iR").GetValue();
 
     for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
-      std::cout << " fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
+      std::cout << "\n  ==>> Fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
       //auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                                                
       //auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val"); 
       // iR_vs_layer->Fill(ij_L, ij_R, mipH->GetEntries());
@@ -174,11 +180,18 @@ void fitMIP(){
       // auto min_iPhi = phiForLayerRadii.Min("MIP_iPhi").GetValue();
       // auto max_iPhi = phiForLayerRadii.Max("MIP_iPhi").GetValue();
 
-      
+
       auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
-      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
+      auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
+      //      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
+
+      for(int minE = 0; minE < minESize; ++minE){
+	int numberOfE = minEvents.at(minE);
+	auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
+
       float nEntries = mipH->GetEntries();
-      if(nEntries == 0) continue;     
+      //if(nEntries == 0) continue;     
+      if(nEntries < numberOfE) continue;     
       RooDataHist locData("locData","locData", xL, Import(*(mipH)) );
 
       //fit and save
@@ -187,6 +200,7 @@ void fitMIP(){
       MIP_values_layer_ring->Fill(fittedVal);
       auto fittedValError = w.var("m_landau_l")->getError();
       MIPerror_vs_nEntries_layer_ring->SetPoint(MIPerror_vs_nEntries_layer_ring->GetN(), nEntries, fittedValError*100.);
+      tp_MIPerror_vs_nEntries_layer_ring->Fill(numberOfE, fittedValError*100.);
 
       RooPlot* frameL = xL.frame();                                                                                                                            
       frameL->SetXTitle("MIP values");                                                                                                                         
@@ -201,11 +215,12 @@ void fitMIP(){
       TCanvas* cL = new TCanvas();                                                                                                                             
       cL->cd();                                                                                                                                                
       frameL->Draw();                                                                                    
-      cL->Print(Form("singleFits/mip_L%d_R%d.png", ij_L+firstLayer, ij_R), ".png"); 
+      cL->Print(Form("singleFits/mip_L%d_R%d_nEvts%d.png", ij_L+firstLayer, ij_R, numberOfE), ".png"); 
       
       delete cL;
       delete frameL;
       //delete mipH;
+      }
     }
   }
 
@@ -239,6 +254,7 @@ void fitMIP(){
   MIPerror_vs_nEntries_layer_ring->Sort();
   MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
   MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
+  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
   MIPerror_vs_nEntries_layer_ring->Draw("ap");
   MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
   gPad->Update();
@@ -246,6 +262,24 @@ void fitMIP(){
   tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
   tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
   tc_scatter->Print("MIPerror_vs_nEntries_layer_ring.png", "png");
+
+
+  tc_scatter->cd();
+  tp_MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
+  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
+  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
+  tp_MIPerror_vs_nEntries_layer_ring->SetMarkerStyle(20);
+  tp_MIPerror_vs_nEntries_layer_ring->SetLineWidth(2);
+  tp_MIPerror_vs_nEntries_layer_ring->Draw("e");
+  hfit_precision->SetParameter(1, 0.01);
+  hfit_precision->SetParameter(0, 0.5);
+  tp_MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
+  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
+  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
+  tL.DrawLatex(0.5, 0.5, Form("#Chi^{2} = %.2f", hfit_precision->GetChisquare()/hfit_precision->GetNDF()));
+  tc_scatter->Print("tp_MIPerror_vs_nEntries_layer_ring.png", "png");
 
   /*
   TCanvas* tc_occu = new TCanvas();
