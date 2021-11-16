@@ -5,15 +5,15 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=19
+upnum=2
 
 makeasubmitdir () {
 # write base for submit file
- printf "Making submits for $1\n"
+ printf "Making submits for $3/$1\n"
 
  # go to the directory
  origindir=$(pwd)
- submitdir=$(pwd)/gitignore/$1
+ submitdir=$(pwd)/gitignore/$3/$1
  mkdir -p ${submitdir}
  pushd    ${submitdir}  > /dev/null
  printf " The directory is %s\n" $(pwd)
@@ -35,7 +35,7 @@ makeasubmitdir () {
  printf "\n" >> submitfile
  until [ ${num} -gt ${upnum} ]
  do
- printf "Transfer_Input_Files = ${origindir}/CMSSW_12_1_0_pre3.tar.gz,${origindir}/runTest.py,${origindir}/${mode}${num}.list\n" >> submitfile 
+ printf "Transfer_Input_Files = ${origindir}/CMSSW_12_1_0_pre4.tar.gz,${origindir}/runTest.py,${origindir}/lists/${mode}${num}.list\n" >> submitfile 
  printf "Arguments = inputFile=${mode}${num}\n" >> submitfile
  printf "Queue\n" >> submitfile
  printf "\n" >> submitfile

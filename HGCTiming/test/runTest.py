@@ -21,7 +21,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 import FWCore.Utilities.FileUtils as FileUtils
 readFiles = cms.untracked.vstring()
-readFiles.extend(FileUtils.loadListFromFile ('%s.list'%options.inputFile) )
+readFiles.extend(FileUtils.loadListFromFile ('lists/%s.list'%options.inputFile) )
 #readFiles.extend(FileUtils.loadListFromFile ('EOL.txt') )
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 20
