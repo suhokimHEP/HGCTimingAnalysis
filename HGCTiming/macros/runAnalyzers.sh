@@ -1,24 +1,14 @@
 #!/bin/bash
 
 samples=( \
-##"singleMuon_startup0"   \
-"singleMuon_eol0"   \
-#"singleMuon_eol1"   \
-#"singleMuon_eol2"   \
-#"singleMuon_eol3"   \
-#"singleMuon_eol4"   \
-#"singleMuon_eol5"   \
-#"singleMuon_eol6"   \
-#"singleMuon_eol7"   \
-#"singleMuon_eol8"   \
-#"singleMuon_eol9"   \
-#"singleMuon_newGun"   \
-#"singleMuon_newGun2"   \
-#"singleMuon_newGun3"   \
+"Gun50"
 )
-for sample in ${samples[@]}
+for rawsample in ${samples[@]}
 do
-  echo ${sample}
-  root -l -b 'lookAtMIP_correctRate.C('\""${sample}"\"')'
-
+ for num in {1..61}
+  do
+   sample=${rawsample}"_"${num}
+   echo ${sample}
+   root -l -b 'lookAtMIP_correctRate.C('\""${sample}"\"','\""${rawsample}"\"')'
+  done
 done

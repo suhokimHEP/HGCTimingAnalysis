@@ -286,6 +286,6 @@ process.ana = cms.EDAnalyzer('HGCalTimingAnalyzer',
 
 process.TFileService = cms.Service("TFileService",
                                    #fileName = cms.string("file:MinBias140PU_0.root")
-                                   fileName = cms.string("file:singleMuon_%s.root"%options.inputFile)
+                                   fileName = cms.string("file:%s.root"%options.inputFile)
                                    )
 process.p = cms.Path(process.ana)

@@ -45,11 +45,10 @@ float getXmax(TH1F* histo, float& YMax){
 //int main(int argc, char** argv){
 //int lookAtMIP_correctRate(char** argv){
 //int lookAtMIP_correctRate(TString argv){
-int lookAtMIP_correctRate(TString filename){
 //int lookAtMIP_correctRate(int argc, char** argv){
+int lookAtMIP_correctRate(TString filename, TString aversion){
 	//TString filename(argv[1]);
-	//cout<<filename<<endl;
-	TString outname = "outMIP"+filename;
+	TString outname = "outMIP_"+filename;
 	  gROOT->Macro("./setStyle.C");
 
 	  gStyle->SetOptStat(0);
@@ -66,11 +65,9 @@ int lookAtMIP_correctRate(TString filename){
 	  int iStyle[4] = {20, 21, 22, 23}; //kGray+1};
 
 
-	  //TFile* inF = TFile::Open("singleMuon_newGun5.root");
-	  TFile* inF = TFile::Open("../test/gitignore/eol/0/"+filename+".root");
+	  TFile* inF = TFile::Open(filename+".root");
+	  //TFile* inF = TFile::Open("../test/gitignore/"+aversion+"/"+filename+".root");
 	  //TFile* inF = TFile::Open("root://cmsxrootd.fnal.gov//store/user/skim2/"+filename);
-	  //TFile* inF = TFile::Open("../test/"+filename);
-	  //TFile* inF = TFile::Open("../test/singleMuon_newGun5.root");
 
 	  //config
 	  int firstLayer = 37;
@@ -245,9 +242,9 @@ int lookAtMIP_correctRate(TString filename){
 	  TH1F* hNum_etaRange_3H[14];
 
 	  TH1F* numHits_etaRange[14];
-	//boost::filesystem::create_directory("plotsMuon_MinBias_correctRate");
-	//boost::filesystem::create_directory("plotsMinBias_correctRate/cells");
-	//boost::filesystem::create_directory("plotsMinBias_correctRate/cellsPhi");
+	//boost::filesystem::create_directory("plotdir");
+	//boost::filesystem::create_directory("plotdir/cells");
+	//boost::filesystem::create_directory("plotdir/cellsPhi");
 	   for(int ij=0; ij<14; ++ij){
 	     h2_YvsX[ij] = new TH2F(Form("h2_YvsX_L%d", ij), "", 600, -300., 300., 600, -300., 300.);
 	     h2_iRvsiPhi[ij] = new TH2F(Form("h2_iRvsiPhi_L%d", ij), "", 100, -50., 50., 300, 0., 300.);
@@ -320,7 +317,7 @@ int lookAtMIP_correctRate(TString filename){
 	   std::cout << " nEvents = " << nEvents << std::endl;
 	   for(int ij=0; ij<nEvents; ++ij){
 	   //for(int ij=0; ij<10000; ++ij){
-	  if (ij%100 == 0){ std::cout << " entry " << ij << std::endl; }
+	  if (ij%20 == 0){ std::cout << " entry " << ij << std::endl; }
 	     //for(int ij=14; ij<16; ++ij){
 	     newT->GetEntry(ij);
 
@@ -858,43 +855,43 @@ int lookAtMIP_correctRate(TString filename){
 	     nMuonsPercm2_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuonsPercm2_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2");
 	     nMuonsPercm2_vsEta[ij]->Draw();
-	     tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_L%d.png", ij+firstLayer), "png");
-	     //    tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
+	     tmuo->Print(Form("plotdir/nMuonsPercm2_vsEta_L%d.png", ij+firstLayer), "png");
+	     //    tmuo->Print(Form("plotdir/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
 	     
 	     nMuons_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuons_vsEta[ij]->Draw();
-	     tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuons_vsEta_L%d.png", ij+firstLayer), "png");
+	     tmuo->Print(Form("plotdir/nMuons_vsEta_L%d.png", ij+firstLayer), "png");
 
 	     ratePercm2_vsEta[ij]->GetYaxis()->SetRangeUser(0., 0.5);
 	     ratePercm2_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     ratePercm2_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2 / s");
 	     ratePercm2_vsEta[ij]->Draw();
-	     tmuo->Print(Form("plotsMuon_MinBias_correctRate/ratePercm2_vsEta_L%d.png", ij+firstLayer), "png");  
+	     tmuo->Print(Form("plotdir/ratePercm2_vsEta_L%d.png", ij+firstLayer), "png");  
 
 	     gPad->SetLogy();
 	     cm2_vsEta[ij]->GetYaxis()->SetRangeUser(0.5, 5.e4);
 	     cm2_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     cm2_vsEta[ij]->GetYaxis()->SetTitle("cm2");
 	     cm2_vsEta[ij]->Draw();
-	     tmuo->Print(Form("plotsMuon_MinBias_correctRate/cm2_vsEta_L%d.png", ij+firstLayer), "png");
+	     tmuo->Print(Form("plotdir/cm2_vsEta_L%d.png", ij+firstLayer), "png");
 
 	     TCanvas* tmuo_3H = new TCanvas();
 	     tmuo_3H->cd();
 	     nMuonsPercm2_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuonsPercm2_3H_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2");
 	     nMuonsPercm2_3H_vsEta[ij]->Draw();
-	     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");
-	     //    tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
+	     tmuo_3H->Print(Form("plotdir/nMuonsPercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");
+	     //    tmuo->Print(Form("plotdir/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
 	     
 	     nMuons_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuons_3H_vsEta[ij]->Draw();
-	     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/nMuons_3H_vsEta_L%d.png", ij+firstLayer), "png");
+	     tmuo_3H->Print(Form("plotdir/nMuons_3H_vsEta_L%d.png", ij+firstLayer), "png");
 
 	     ratePercm2_3H_vsEta[ij]->GetYaxis()->SetRangeUser(0., 0.5);
 	     ratePercm2_3H_vsEta[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     ratePercm2_3H_vsEta[ij]->GetYaxis()->SetTitle("n Muons / cm2 / s");
 	     ratePercm2_3H_vsEta[ij]->Draw();
-	     tmuo_3H->Print(Form("plotsMuon_MinBias_correctRate/ratePercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");  
+	     tmuo_3H->Print(Form("plotdir/ratePercm2_3H_vsEta_L%d.png", ij+firstLayer), "png");  
 
 
 	     
@@ -903,18 +900,18 @@ int lookAtMIP_correctRate(TString filename){
 	     nMuonsPercm2_vsEta_All[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuonsPercm2_vsEta_All[ij]->GetYaxis()->SetTitle("n Muons / cm2");
 	     nMuonsPercm2_vsEta_All[ij]->Draw();
-	     tmuoAll->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_All_L%d.png", ij+firstLayer), "png");
-	     //    tmuo->Print(Form("plotsMuon_MinBias_correctRate/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
+	     tmuoAll->Print(Form("plotdir/nMuonsPercm2_vsEta_All_L%d.png", ij+firstLayer), "png");
+	     //    tmuo->Print(Form("plotdir/nMuonsPercm2_vsEta_L%d.root", ij+firstLayer), "root");
 	     
 	     nMuons_vsEta_All[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     nMuons_vsEta_All[ij]->Draw();
-	     tmuoAll->Print(Form("plotsMuon_MinBias_correctRate/nMuons_vsEta_All_L%d.png", ij+firstLayer), "png");
+	     tmuoAll->Print(Form("plotdir/nMuons_vsEta_All_L%d.png", ij+firstLayer), "png");
 
 	     ratePercm2_vsEta_All[ij]->GetYaxis()->SetRangeUser(0., 20.);
 	     ratePercm2_vsEta_All[ij]->GetXaxis()->SetTitle(Form("#eta layer %d", ij+firstLayer));
 	     ratePercm2_vsEta_All[ij]->GetYaxis()->SetTitle("n Muons / cm2 / s");
 	     ratePercm2_vsEta_All[ij]->Draw();
-	     tmuoAll->Print(Form("plotsMuon_MinBias_correctRate/ratePercm2_vsEta_All_L%d.png", ij+firstLayer), "png");  
+	     tmuoAll->Print(Form("plotdir/ratePercm2_vsEta_All_L%d.png", ij+firstLayer), "png");  
 	   }
 	   
 	   
@@ -924,40 +921,40 @@ int lookAtMIP_correctRate(TString filename){
 	   tChi->cd();
 	   h_TrkChi_all->GetXaxis()->SetTitle("trk chi all"); 
 	   h_TrkChi_all->Draw();
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkChi_all.png", "png");
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkChi_all.root", "root");
+	   tChi->Print("plotdir/h_TrkChi_all.png", "png");
+	   tChi->Print("plotdir/h_TrkChi_all.root", "root");
 
 	   h_TrkQ_all->GetXaxis()->SetTitle("trk Q all"); 
 	   h_TrkQ_all->Draw();
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkQ_all.png", "png");
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkQ_all.root", "root");
+	   tChi->Print("plotdir/h_TrkQ_all.png", "png");
+	   tChi->Print("plotdir/h_TrkQ_all.root", "root");
 
 	   h_TrkChi_passed->GetXaxis()->SetTitle("trk chi all"); 
 	   h_TrkChi_passed->Draw();
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkChi_passed.png", "png");
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkChi_passed.root", "root");
+	   tChi->Print("plotdir/h_TrkChi_passed.png", "png");
+	   tChi->Print("plotdir/h_TrkChi_passed.root", "root");
 
 	   h_TrkQ_passed->GetXaxis()->SetTitle("trk Q all"); 
 	   h_TrkQ_passed->Draw();
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkQ_passed.png", "png");
-	   tChi->Print("plotsMuon_MinBias_correctRate/h_TrkQ_passed.root", "root");
+	   tChi->Print("plotdir/h_TrkQ_passed.png", "png");
+	   tChi->Print("plotdir/h_TrkQ_passed.root", "root");
 
 	   for(int ij=0; ij<14; ++ij){
 	     tChi->cd();
 	     h_trkP[ij]->GetXaxis()->SetTitle(Form("track p on layer %d", ij+firstLayer));
 	     h_trkP[ij]->Draw();
-	     tChi->Print(Form("plotsMuon_MinBias_correctRate/h_trkP_L%d.png", ij+firstLayer), "png");
+	     tChi->Print(Form("plotdir/h_trkP_L%d.png", ij+firstLayer), "png");
 
 	     gPad->SetLogy();
 	     tChi->cd();
 	     h_trkPt[ij]->GetXaxis()->SetTitle(Form("track pt on layer %d", ij+firstLayer));
 	     h_trkPt[ij]->Draw();
-	     tChi->Print(Form("plotsMuon_MinBias_correctRate/h_trkPt_L%d.png", ij+firstLayer), "png");
+	     tChi->Print(Form("plotdir/h_trkPt_L%d.png", ij+firstLayer), "png");
 
 	     tChi->cd();
 	     h_dtrkP[ij]->GetXaxis()->SetTitle(Form("dp wrt previous layer (layer %d) (MeV)", ij+firstLayer));
 	     h_dtrkP[ij]->Draw();
-	     tChi->Print(Form("plotsMuon_MinBias_correctRate/h_dtrkP_L%d.png", ij+firstLayer), "png");
+	     tChi->Print(Form("plotdir/h_dtrkP_L%d.png", ij+firstLayer), "png");
 
 	   }
 	   //   return;
@@ -966,14 +963,14 @@ int lookAtMIP_correctRate(TString filename){
 	   tMuo->cd();
 	   h_etaMuon->GetXaxis()->SetTitle("muon #eta");
 	   h_etaMuon->Draw();
-	   tMuo->Print("plotsMuon_MinBias_correctRate/etaMuon_all_L37.png", "png");
-	   tMuo->Print("plotsMuon_MinBias_correctRate/etaMuon_all_L37.root", "root");
+	   tMuo->Print("plotdir/etaMuon_all_L37.png", "png");
+	   tMuo->Print("plotdir/etaMuon_all_L37.root", "root");
 
 	   gPad->SetLogy();
 	   h_ptMuon->GetXaxis()->SetTitle("muon pT");
 	   h_ptMuon->Draw();
-	   tMuo->Print("plotsMuon_MinBias_correctRate/ptMuon_all_L37.png", "png");
-	   tMuo->Print("plotsMuon_MinBias_correctRate/ptMuon_all_L37.root", "root");
+	   tMuo->Print("plotdir/ptMuon_all_L37.png", "png");
+	   tMuo->Print("plotdir/ptMuon_all_L37.root", "root");
 	   //   }
 
 
@@ -1000,12 +997,12 @@ int lookAtMIP_correctRate(TString filename){
 	     h_MuonCross[ij]->GetYaxis()->SetTitle("muon cross");
 	     h_MuonCross[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
 	     h_MuonCross[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_MuonCross_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_MuonCross_L%d.png", ij+firstLayer), "png");
 
 	     h_MuonNHit[ij]->GetYaxis()->SetTitle("muon matched hit");
 	     h_MuonNHit[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
 	     h_MuonNHit[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_MuonNHit_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_MuonNHit_L%d.png", ij+firstLayer), "png");
 
 	     MuonNHit_eff[ij] = (TH1F*)h_MuonNHit[ij]->Clone(Form("MuonNHit_eff_%d", ij+firstLayer));
 	     MuonNHit_eff[ij]->Reset();
@@ -1013,7 +1010,7 @@ int lookAtMIP_correctRate(TString filename){
 	     MuonNHit_eff[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
 	     MuonNHit_eff[ij]->GetYaxis()->SetTitle("purity");
 	     MuonNHit_eff[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/MuonNHit_eff_L%d.png", ij+firstLayer), "png");
 	     
 	     MuonNHit_eff_tg[ij] = new TGraph();
 	     MuonNHit_eff_tg[ij]->SetTitle(Form("MuonNHit_eff_tg_L%d_nH%d",ij));
@@ -1030,7 +1027,7 @@ int lookAtMIP_correctRate(TString filename){
 	       MuonNHitK_eff[kl][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
 	       MuonNHitK_eff[kl][ij]->GetYaxis()->SetTitle(Form("purity (finding %d hits)", kl));
 	       MuonNHitK_eff[kl][ij]->Draw();
-	       //       if(kl == 5 || kl == 13) tc->Print(Form("plotsMinBias_correctRate/MuonNHitK_eff_L%d_N%d.png", ij+firstLayer, kl), "png");
+	       //       if(kl == 5 || kl == 13) tc->Print(Form("plotdir/MuonNHitK_eff_L%d_N%d.png", ij+firstLayer, kl), "png");
 
 	       MuonNHitK_eff_tg[kl][ij] = new TGraph();
 	       MuonNHitK_eff_tg[kl][ij]->SetTitle(Form("MuonNHitK_eff_tg_L%d_nH%d",ij, kl));
@@ -1045,9 +1042,9 @@ int lookAtMIP_correctRate(TString filename){
 	     }
 	     etaRange_eff->SetPoint(etaRange_eff->GetN()+1, ij+firstLayer, hNum_etaRange[ij]->GetBinContent(1)/hDen_etaRange[ij]->GetBinContent(1));
 	     hNum_etaRange[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/hNum_etaRange_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/hNum_etaRange_L%d.png", ij+firstLayer), "png");
 	     hDen_etaRange[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/hDen_etaRange_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/hDen_etaRange_L%d.png", ij+firstLayer), "png");
 	     etaRange_3H_eff->SetPoint(etaRange_3H_eff->GetN()+1, ij+firstLayer, hNum_etaRange_3H[ij]->GetBinContent(1)/hDen_etaRange_3H[ij]->GetBinContent(1));
 	   }
 	   etaRange_eff->SetPoint(etaRange_eff->GetN()+1, 60, 1.5);
@@ -1056,14 +1053,14 @@ int lookAtMIP_correctRate(TString filename){
 	   etaRange_eff->GetXaxis()->SetTitle("layer");
 	   etaRange_eff->GetXaxis()->SetRangeUser(30., 55);
 	   etaRange_eff->Draw("ap");
-	   tgEta->Print("plotsMinBias_correctRate/tgEta.png", "png");
+	   tgEta->Print("plotdir/tgEta.png", "png");
 
 	   etaRange_3H_eff->SetPoint(etaRange_3H_eff->GetN()+1, 60, 1.5);
 	   tgEta->cd();
 	   etaRange_3H_eff->GetXaxis()->SetTitle("layer");
 	   etaRange_3H_eff->GetXaxis()->SetRangeUser(30., 55);
 	   etaRange_3H_eff->Draw("ap");
-	   tgEta->Print("plotsMinBias_correctRate/tgEta_3H.png", "png");
+	   tgEta->Print("plotdir/tgEta_3H.png", "png");
 
 
 	   //tg
@@ -1144,8 +1141,8 @@ int lookAtMIP_correctRate(TString filename){
 	   // gStyle->SetOptTitle(0);
 	   // Muon1stHit_eff[0]->GetXaxis()->SetRangeUser(1.2, 3.);
 	   // legTGM->Draw("same");
-	   // tcE->Print("plotsMinBias_correctRate/Muon1stHit_eff.png", "png");
-	   // tcE->Print("plotsMinBias_correctRate/Muon1stHit_eff.root", "root");
+	   // tcE->Print("plotdir/Muon1stHit_eff.png", "png");
+	   // tcE->Print("plotdir/Muon1stHit_eff.root", "root");
 	   
 
 	   for(int kl=0; kl<14; ++kl){
@@ -1176,8 +1173,8 @@ int lookAtMIP_correctRate(TString filename){
 	     MuonNHitK_eff[kl][0]->GetXaxis()->SetRangeUser(1.2, 3.);
 	     MuonNHitK_eff[kl][0]->GetYaxis()->SetRangeUser(0., 1.05);
 	     legTGM2->Draw("same");
-	     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHitK_eff_N%02d.png", kl), "png");
-	     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHitK_eff_N%02d.root", kl), "root");
+	     tcNE->Print(Form("plotdir/MuonNHitK_eff_N%02d.png", kl), "png");
+	     tcNE->Print(Form("plotdir/MuonNHitK_eff_N%02d.root", kl), "root");
 
 	     if(kl == 1){
 	       legTGM2->Clear();
@@ -1197,8 +1194,8 @@ int lookAtMIP_correctRate(TString filename){
 	     MuonNHit_eff[0]->GetXaxis()->SetRangeUser(1.2, 3.);
 	     MuonNHit_eff[0]->GetYaxis()->SetRangeUser(0., 1.05);
 	     legTGM2->Draw("same");
-	     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHit_eff.png", kl), "png");
-	     tcNE->Print(Form("plotsMinBias_correctRate/MuonNHit_eff.root", kl), "root");
+	     tcNE->Print(Form("plotdir/MuonNHit_eff.png", kl), "png");
+	     tcNE->Print(Form("plotdir/MuonNHit_eff.root", kl), "root");
 	     }
 	   }
 
@@ -1231,8 +1228,8 @@ int lookAtMIP_correctRate(TString filename){
 	   MuonNHit_eff_tg[0]->GetXaxis()->SetRangeUser(1.2, 3.);
 	   MuonNHit_eff_tg[0]->GetYaxis()->SetRangeUser(0., 1.05);
 	   legTGM22->Draw("same");
-	   tcNEtg->Print("plotsMinBias_correctRate/MuonNHit_eff_tg.png", "png");
-	   tcNEtg->Print("plotsMinBias_correctRate/MuonNHit_eff_tg.root", "root");
+	   tcNEtg->Print("plotdir/MuonNHit_eff_tg.png", "png");
+	   tcNEtg->Print("plotdir/MuonNHit_eff_tg.root", "root");
 
 
 	   //now k tg
@@ -1258,10 +1255,10 @@ int lookAtMIP_correctRate(TString filename){
 	   MuonNHitK_eff_tg[kl][0]->GetXaxis()->SetRangeUser(1.2, 3.);
 	   MuonNHitK_eff_tg[kl][0]->GetYaxis()->SetRangeUser(0., 1.05);
 	   legTGM22->Draw("same");
-	   // tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_L%02d.png", kl+firstLayer), "png");
-	   // tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_L%02d.root", kl+firstLayer), "root");
-	   tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_N%02d.png", kl), "png");
-	   tcNEtg->Print(Form("plotsMinBias_correctRate/MuonNHit_eff_tg_N%02d.root", kl), "root");
+	   // tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_L%02d.png", kl+firstLayer), "png");
+	   // tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_L%02d.root", kl+firstLayer), "root");
+	   tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_N%02d.png", kl), "png");
+	   tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_N%02d.root", kl), "root");
 	   }
 	   */
 
@@ -1274,83 +1271,83 @@ int lookAtMIP_correctRate(TString filename){
 	     tc->cd();
 	     h2_YvsX[ij]->GetXaxis()->SetTitle(Form("layer %d", ij));
 	     h2_YvsX[ij]->Draw("colz");
-	     tc->Print(Form("plotsMinBias_correctRate/h2_YvsX_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h2_YvsX_L%d.png", ij), "png");
 
 	     h2_iRvsiPhi[ij]->GetXaxis()->SetTitle(Form("|iR| layer %d", ij));
 	     h2_iRvsiPhi[ij]->GetYaxis()->SetTitle("iPhi");
 	     h2_iRvsiPhi[ij]->Draw("colz");
-	     tc->Print(Form("plotsMinBias_correctRate/h2_iRvsiPhi_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h2_iRvsiPhi_L%d.png", ij), "png");
 	     //   continue;
 	     h_dX[ij]->GetXaxis()->SetTitle(Form("dX layer %d", ij));
 	     h_dX[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dX_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h_dX_L%d.png", ij), "png");
 
 	     h_dY[ij]->GetXaxis()->SetTitle(Form("dY layer %d", ij));
 	     h_dY[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dY_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h_dY_L%d.png", ij), "png");
 
 	     h_dR[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij+firstLayer));
 	     h_dR[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dR_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dR_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dR_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dR_L%d.root", ij+firstLayer), "root");
 
 	     h_dRep[ij]->GetXaxis()->SetTitle(Form("dR(#eta, #phi) layer %d", ij+firstLayer));
 	     h_dRep[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRep_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRep_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dRep_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dRep_L%d.root", ij+firstLayer), "root");
 	     h_dRep[ij]->GetXaxis()->SetRangeUser(0., 0.05);
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRep_L%d_zoomIn.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dRep_L%d_zoomIn.png", ij+firstLayer), "png");
 
 	     h_d_iR[ij]->GetXaxis()->SetTitle(Form("d_iR(recHit - track) layer %d", ij+firstLayer));
 	     h_d_iR[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iR_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iR_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_d_iR_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_d_iR_L%d.root", ij+firstLayer), "root");
 
 	     h_d_iPhi[ij]->GetXaxis()->SetTitle(Form("d_iPhi(recHit - track) layer %d", ij+firstLayer));
 	     h_d_iPhi[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iPhi_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iPhi_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_d_iPhi_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_d_iPhi_L%d.root", ij+firstLayer), "root");
 
 	     h_d_iR_vs_iPhi[ij]->GetXaxis()->SetTitle(Form("d_iPhi(recHit - track) layer %d", ij+firstLayer));
 	     h_d_iR_vs_iPhi[ij]->GetYaxis()->SetTitle(Form("d_iR(recHit - track) layer %d", ij+firstLayer));
 	     h_d_iR_vs_iPhi[ij]->Draw("colz");
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iR_vs_iPhi_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_d_iR_vs_iPhi_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_d_iR_vs_iPhi_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_d_iR_vs_iPhi_L%d.root", ij+firstLayer), "root");
 
 
 	     h_dRerr[ij]->GetXaxis()->SetTitle(Form("dRerror(x, y) layer %d", ij+firstLayer));
 	     h_dRerr[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dRerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dRerr_L%d.root", ij+firstLayer), "root");
 	     //     h_dRerr[ij]->GetXaxis()->SetRangeUser(0., 0.05);
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dRerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dRerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dRerr_L%d.root", ij+firstLayer), "root");
 
 	     h_dXerr[ij]->GetXaxis()->SetTitle(Form("dXerror (cm) layer %d", ij+firstLayer));
 	     h_dXerr[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dXerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dXerr_L%d.root", ij+firstLayer), "root");
 	     //     h_dRerr[ij]->GetXaxis()->SetRangeUser(0., 0.05);
-	     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dXerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dXerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dXerr_L%d.root", ij+firstLayer), "root");
 
 	     h_dYerr[ij]->GetXaxis()->SetTitle(Form("dYerror (cm) layer %d", ij+firstLayer));
 	     h_dYerr[ij]->Draw();
-	     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dYerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dYerr_L%d.root", ij+firstLayer), "root");
 	     //     h_dRerr[ij]->GetXaxis()->SetRangeUser(0., 0.05);
-	     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.png", ij+firstLayer), "png");
-	     tc->Print(Form("plotsMinBias_correctRate/h_dYerr_L%d.root", ij+firstLayer), "root");
+	     tc->Print(Form("plotdir/h_dYerr_L%d.png", ij+firstLayer), "png");
+	     tc->Print(Form("plotdir/h_dYerr_L%d.root", ij+firstLayer), "root");
 
 	     h2_dR_vsChi[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij));
 	     h2_dR_vsChi[ij]->GetYaxis()->SetTitle("muon trk chi2");
 	     h2_dR_vsChi[ij]->Draw("colz");
-	     tc->Print(Form("plotsMinBias_correctRate/h2_dR_vsChi_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h2_dR_vsChi_L%d.png", ij), "png");
 
 	     h2_dRep_vsChi[ij]->GetXaxis()->SetTitle(Form("dR(#eta, #phi) layer %d", ij));
 	     h2_dRep_vsChi[ij]->GetYaxis()->SetTitle("muon trk chi2");
 	     h2_dRep_vsChi[ij]->Draw("colz");
-	     tc->Print(Form("plotsMinBias_correctRate/h2_dRep_vsChi_L%d.png", ij), "png");
+	     tc->Print(Form("plotdir/h2_dRep_vsChi_L%d.png", ij), "png");
 
 
 	     TCanvas* tc2 = new TCanvas();
@@ -1358,28 +1355,28 @@ int lookAtMIP_correctRate(TString filename){
 	     h2_dR_vsTrkQ[ij]->GetXaxis()->SetTitle(Form("dR layer %d", ij));
 	     h2_dR_vsTrkQ[ij]->GetYaxis()->SetTitle("muon trk quality");
 	     h2_dR_vsTrkQ[ij]->Draw("colz");
-	     tc2->Print(Form("plotsMinBias_correctRate/h2_dR_vsTrkQ_L%d.png", ij), "png");
+	     tc2->Print(Form("plotdir/h2_dR_vsTrkQ_L%d.png", ij), "png");
 
 	     tc2->cd();
 	     h2_iR_vsEta_size[ij]->GetXaxis()->SetTitle(Form("eta layer %d", ij+firstLayer));
 	     h2_iR_vsEta_size[ij]->GetYaxis()->SetTitle(Form("|iR| layer %d", ij+firstLayer));
 	     h2_iR_vsEta_size[ij]->Draw("colz");
 	     h2_iR_vsEta_size[ij]->SetMarkerStyle(7);
-	     tc2->Print(Form("plotsMinBias_correctRate/h2_iR_vsEta_size_L%d.png", ij+firstLayer), "png");
+	     tc2->Print(Form("plotdir/h2_iR_vsEta_size_L%d.png", ij+firstLayer), "png");
 
 	     tc2->cd();
 	     h2_iR_vsEta[ij]->GetXaxis()->SetTitle(Form("eta layer %d", ij+firstLayer));
 	     h2_iR_vsEta[ij]->GetYaxis()->SetTitle(Form("|iR| layer %d", ij+firstLayer));
 	     h2_iR_vsEta[ij]->Draw(""); //"colz");
 	     h2_iR_vsEta[ij]->SetMarkerStyle(7);
-	     tc2->Print(Form("plotsMinBias_correctRate/h2_iR_vsEta_L%d.png", ij+firstLayer), "png");
+	     tc2->Print(Form("plotdir/h2_iR_vsEta_L%d.png", ij+firstLayer), "png");
 
 	     tc2->cd();
 	     h2_iR_vsR[ij]->GetXaxis()->SetTitle(Form("R layer %d", ij+firstLayer));
 	     h2_iR_vsR[ij]->GetYaxis()->SetTitle(Form("|iR| layer %d", ij+firstLayer));
 	     h2_iR_vsR[ij]->Draw(""); //"colz");
 	     h2_iR_vsR[ij]->SetMarkerStyle(7);
-	     tc2->Print(Form("plotsMinBias_correctRate/h2_iR_vsR_L%d.png", ij+firstLayer), "png");
+	     tc2->Print(Form("plotdir/h2_iR_vsR_L%d.png", ij+firstLayer), "png");
 
 	   }
 
@@ -1511,8 +1508,8 @@ int lookAtMIP_correctRate(TString filename){
 	      // tL.DrawLatex(0.55, 0.50, Form("by prev dR = %d", rejectedByPrevdR));
 	      // tL.DrawLatex(0.55, 0.40, Form("found = %d", countFilled));
 
-	      tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Phi_%d_%d.png", iL+firstLayer, iR), "png");
-	      if(iL == 0) tcM->Print(Form("plotsMinBias_correctRate/cells/h_Mip_Phi_%d_%d.root", iL+firstLayer, iR), "root");
+	      tcM->Print(Form("plotdir/cellsPhi/h_Mip_Phi_%d_%d.png", iL+firstLayer, iR), "png");
+	      if(iL == 0) tcM->Print(Form("plotdir/cells/h_Mip_Phi_%d_%d.root", iL+firstLayer, iR), "root");
 
 	      ++savedCout;
 	    }
@@ -1626,8 +1623,8 @@ int lookAtMIP_correctRate(TString filename){
       //h_Mip_Phi_3H[savedCout]->Fit("hfithisto", "RB");
       h_Mip_Phi_3H[savedCout]->Fit("hfithisto", "q");
 
-      tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Phi_3H_%d_%d.png", iL+firstLayer, iR), "png");
-      if(iL == 0) tcM->Print(Form("plotsMinBias_correctRate/cells/h_Mip_Phi_3H_%d_%d.root", iL+firstLayer, iR), "root");
+      tcM->Print(Form("plotdir/cellsPhi/h_Mip_Phi_3H_%d_%d.png", iL+firstLayer, iR), "png");
+      if(iL == 0) tcM->Print(Form("plotdir/cells/h_Mip_Phi_3H_%d_%d.root", iL+firstLayer, iR), "root");
 
       ++savedCout;
     }
@@ -1658,7 +1655,7 @@ int lookAtMIP_correctRate(TString filename){
     tcM->cd();
     h_Mip_Layer[ij]->GetXaxis()->SetTitle(Form("MIP layer %d", ij+firstLayer) );
     h_Mip_Layer[ij]->Draw();
-    tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Layer_%d.png", ij+firstLayer), "png");
+    tcM->Print(Form("plotdir/cellsPhi/h_Mip_Layer_%d.png", ij+firstLayer), "png");
 
     //3hits
     getXmax(h_Mip_Layer_3H[ij], yMax);
@@ -1681,7 +1678,7 @@ int lookAtMIP_correctRate(TString filename){
     tcM->cd();
     h_Mip_Layer_3H[ij]->GetXaxis()->SetTitle(Form("MIP layer %d", ij+firstLayer) );
     h_Mip_Layer_3H[ij]->Draw();
-    tcM->Print(Form("plotsMinBias_correctRate/cellsPhi/h_Mip_Layer_3H_%d.png", ij+firstLayer), "png");
+    tcM->Print(Form("plotdir/cellsPhi/h_Mip_Layer_3H_%d.png", ij+firstLayer), "png");
 
 
 
@@ -1697,40 +1694,40 @@ int lookAtMIP_correctRate(TString filename){
   h_MPV_values->Draw();
   //h_MPV_values->Fit("hfit", "R");
   h_MPV_values->Fit("hfit", "q");
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_values.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_MPV_values.png", "png");
 
   hfit->SetParameters(h_MPV_layer_values->GetEntries()/2., 1, 0.02);
   h_MPV_layer_values->GetXaxis()->SetTitle("MPV values for layers");
   h_MPV_layer_values->Draw();
   //h_MPV_layer_values->Fit("hfit", "R");
   h_MPV_layer_values->Fit("hfit", "q");
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_layer_values.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_MPV_layer_values.png", "png");
 
   hfit->SetParameters(h_MPV_values_3H->GetEntries()/2., 1, 0.02);
   h_MPV_values_3H->GetXaxis()->SetTitle("MPV values (3hits)");
   h_MPV_values_3H->Draw();
   //h_MPV_values_3H->Fit("hfit", "R");
   h_MPV_values_3H->Fit("hfit", "q");
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_values_3H.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_MPV_values_3H.png", "png");
 
   hfit->SetParameters(h_MPV_layer_values_3H->GetEntries()/2., 1, 0.02);
   h_MPV_layer_values_3H->GetXaxis()->SetTitle("MPV values for layers (3hits)");
   h_MPV_layer_values_3H->Draw();
   //h_MPV_layer_values_3H->Fit("hfit", "R");
   h_MPV_layer_values_3H->Fit("hfit", "q");
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_MPV_layer_values_3H.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_MPV_layer_values_3H.png", "png");
 
 
   gPad->SetLogy();
   tcC_Phi->cd();
   h_Count_Phi->GetXaxis()->SetTitle("n counts in rings over #phi");
   h_Count_Phi->Draw();
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_Count_Phi.png", "png");
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_Count_Phi.root", "root");
+  tcC_Phi->Print("plotdir/cellsPhi/h_Count_Phi.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_Count_Phi.root", "root");
 
   h_minNcounts->GetXaxis()->SetTitle("minimal N. counts");
   h_minNcounts->Draw();
-  tcC_Phi->Print("plotsMinBias_correctRate/cellsPhi/h_minNcounts.png", "png");
+  tcC_Phi->Print("plotdir/cellsPhi/h_minNcounts.png", "png");
 
   gStyle->SetOptStat(0);
   TCanvas* tcC2_Phi = new TCanvas();
@@ -1738,24 +1735,24 @@ int lookAtMIP_correctRate(TString filename){
   h2_iRvsLayer_MIP->GetYaxis()->SetTitle("iR");
   h2_iRvsLayer_MIP->GetZaxis()->SetRangeUser(0., 3.);
   h2_iRvsLayer_MIP->Draw("colz");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP.png", "png");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP.root", "root");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_iRvsLayer_MIP.png", "png");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_iRvsLayer_MIP.root", "root");
 
   tcC2_Phi->cd();
   h2_MIP_vs_Layer->GetXaxis()->SetTitle("layer");
   h2_MIP_vs_Layer->GetYaxis()->SetTitle("MIP");
   h2_MIP_vs_Layer->GetYaxis()->SetRangeUser(0.8, 1.2);
   h2_MIP_vs_Layer->Draw();
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer.png", "png");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer.root", "root");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_MIP_vs_Layer.png", "png");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_MIP_vs_Layer.root", "root");
 
   tcC2_Phi->cd();
   h2_iRvsLayer_MIP_3H->GetXaxis()->SetTitle("layer");
   h2_iRvsLayer_MIP_3H->GetYaxis()->SetTitle("iR");
   h2_iRvsLayer_MIP_3H->GetZaxis()->SetRangeUser(0., 3.);
   h2_iRvsLayer_MIP_3H->Draw("colz");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP_3H.png", "png");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_iRvsLayer_MIP_3H.root", "root");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_iRvsLayer_MIP_3H.png", "png");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_iRvsLayer_MIP_3H.root", "root");
 
 
   tcC2_Phi->cd();
@@ -1763,8 +1760,8 @@ int lookAtMIP_correctRate(TString filename){
   h2_MIP_vs_Layer_3H->GetYaxis()->SetTitle("MIP");
   h2_MIP_vs_Layer_3H->GetYaxis()->SetRangeUser(0.8, 1.2);
   h2_MIP_vs_Layer_3H->Draw();
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer_3H.png", "png");
-  tcC2_Phi->Print("plotsMinBias_correctRate/cellsPhi/h2_MIP_vs_Layer_3H.root", "root");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_MIP_vs_Layer_3H.png", "png");
+  tcC2_Phi->Print("plotdir/cellsPhi/h2_MIP_vs_Layer_3H.root", "root");
 
 
 

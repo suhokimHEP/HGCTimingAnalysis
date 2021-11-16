@@ -5,7 +5,7 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=51
+upnum=5
 
 makeasubmitdir () {
 # write base for submit file
@@ -35,8 +35,8 @@ makeasubmitdir () {
  printf "\n" >> submitfile
  until [ ${num} -gt ${upnum} ]
  do
- printf "Transfer_Input_Files = ${origindir}/CMSSW_12_1_0_pre4.tar.gz,${origindir}/runTest.py,${origindir}/lists/${mode}_${num}.list\n" >> submitfile 
- printf "Arguments = inputFile=${mode}_${num}\n" >> submitfile
+ printf "Transfer_Input_Files = ${origindir}/CMSSW_12_1_0_pre4.tar.gz,${origindir}/lookAtMIP_correctRate.C,${origindir}/setStyle.C,${origindir}/../test/gitignore/${mode}/${mode}_${num}.root\n" >> submitfile 
+ printf "Arguments = ${mode} ${num}\n" >> submitfile
  printf "Queue\n" >> submitfile
  printf "\n" >> submitfile
  printf "\n" >> submitfile
