@@ -1,11 +1,15 @@
 #!/bin/bash
 doSubmit=true
 modes=( \ 
- "Gun50"       \
+"40mu_startup_sn2.0" \
+# "old"       \
+# "old_eol"       \
+# "old_startup_sn2.0"       \
+# "Gun50"       \
 # "startup"       \
 ) 
 num=0
-upnum=5
+upnum=20
 
 makeasubmitdir () {
 # write base for submit file

@@ -315,9 +315,9 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 
 	   int nEvents = newT->GetEntries();
 	   std::cout << " nEvents = " << nEvents << std::endl;
-	   for(int ij=0; ij<nEvents; ++ij){
-	   //for(int ij=0; ij<10000; ++ij){
-	  if (ij%20 == 0){ std::cout << " entry " << ij << std::endl; }
+	   //for(int ij=0; ij<nEvents; ++ij){
+	   for(int ij=0; ij<40; ++ij){
+	  if (ij%10 == 0){ std::cout << " entry " << ij << std::endl; }
 	     //for(int ij=14; ij<16; ++ij){
 	     newT->GetEntry(ij);
 
@@ -646,11 +646,15 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 
 	       }//track
 	     }// layer
-	  
-	   
+	 
+ 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+
 	     //     continue;
-	     for(int nHits = 1; nHits<14; ++nHits){
-	       if (nHits != 3) continue;
+	     int thevar =3;
+	     for(int nHits = 1; nHits<5; ++nHits){
+	       if (nHits != thevar) continue;
 	     foundFirstHit.clear();
 	     x1stHit.clear();
 	     y1stHit.clear();
@@ -672,14 +676,13 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 		 //std::cout << " nHits = " << nHits << " matchedTrack[trackIdx] = " << matchedTrack[trackIdx] << " startLMatchedTrack[trackIdx] = " << startLMatchedTrack[trackIdx] << " iL = " << iL << std::endl;
 
 		 //questo ok ma conta ultimi layer per max 1, 2, 3 hits...
-		 if( (nHits > matchedTrack[trackIdx] &&  (matchedTrack[trackIdx] != (14 - startLMatchedTrack[trackIdx]) || iL < startLMatchedTrack[trackIdx])) || 
-		     matchedTrack[trackIdx] == 0){
+		 if( (nHits > matchedTrack[trackIdx] &&  (matchedTrack[trackIdx] != (14 - startLMatchedTrack[trackIdx]) || iL < startLMatchedTrack[trackIdx])) || matchedTrack[trackIdx] == 0){
 		   continue;
 		 }
 		 
 
 		 //if(nHits > matchedTrack[trackIdx]) continue;
-		 if(matchedTrack[trackIdx] < 3) continue;
+		 if(matchedTrack[trackIdx] < thevar) continue;
 		 //	 std::cout << " ok " << std::endl;
 
 		 //just using the back 8 layers
@@ -748,7 +751,7 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 
 		     float reciR = rhiR[iL][iRc];
 		     std::pair<int, int> channelPhi = std::pair<int, int>(iL, std::abs(reciR));
-		     if(nHits == 3){
+		     if(nHits == thevar){
 		       if(okChannelsPhi_3H.find(channelPhi) != okChannelsPhi.end()) {
 			 okChannelsPhi_3H[channelPhi] += 1;
 		       }
@@ -786,7 +789,7 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 		       return 100;
 		     }
 
-		     if(nHits == 3){
+		     if(nHits == thevar){
 		       //here rate for trk with 3 Hits                                                                                                                                                          
 		       if(!alreadyFilled_3H){
 			 nMuons_3H_vsEta[iL]->Fill(std::abs(trkEtaOnLayer));
@@ -990,52 +993,6 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 	     TCanvas* tc = new TCanvas();
 	     tc->cd();
 
-	     /*
-	     h_MuonCross[ij]->Rebin(4);
-	     h_MuonNHit[ij]->Rebin(4);
-
-	     h_MuonCross[ij]->GetYaxis()->SetTitle("muon cross");
-	     h_MuonCross[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-	     h_MuonCross[ij]->Draw();
-	     tc->Print(Form("plotdir/h_MuonCross_L%d.png", ij+firstLayer), "png");
-
-	     h_MuonNHit[ij]->GetYaxis()->SetTitle("muon matched hit");
-	     h_MuonNHit[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-	     h_MuonNHit[ij]->Draw();
-	     tc->Print(Form("plotdir/h_MuonNHit_L%d.png", ij+firstLayer), "png");
-
-	     MuonNHit_eff[ij] = (TH1F*)h_MuonNHit[ij]->Clone(Form("MuonNHit_eff_%d", ij+firstLayer));
-	     MuonNHit_eff[ij]->Reset();
-	     MuonNHit_eff[ij]->Divide(h_MuonNHit[ij],h_MuonCross[ij]);
-	     MuonNHit_eff[ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-	     MuonNHit_eff[ij]->GetYaxis()->SetTitle("purity");
-	     MuonNHit_eff[ij]->Draw();
-	     tc->Print(Form("plotdir/MuonNHit_eff_L%d.png", ij+firstLayer), "png");
-	     
-	     MuonNHit_eff_tg[ij] = new TGraph();
-	     MuonNHit_eff_tg[ij]->SetTitle(Form("MuonNHit_eff_tg_L%d_nH%d",ij));
-	     MuonNHit_eff_tg[ij]->SetPoint(0, 0, 0);
-
-
-	     for(int kl=0; kl<14; ++kl){
-	       h_MuonNHitK[kl][ij]->Rebin(4);
-	       h_MuonCrossK[kl][ij]->Rebin(4);
-	       //       if(ij == 4){std::cout << " num entries = " << h_MuonNHitK[kl][ij]->GetEntries() << " den entries = " << h_MuonCrossK[kl][ij]->GetEntries() << std::endl;}
-	       MuonNHitK_eff[kl][ij] = (TH1F*)h_MuonNHitK[kl][ij]->Clone(Form("MuonNHitK_eff_%d_N%d", ij+firstLayer, kl));
-	       MuonNHitK_eff[kl][ij]->Reset();
-	       MuonNHitK_eff[kl][ij]->Divide(h_MuonNHitK[kl][ij],h_MuonCrossK[kl][ij]);
-	       MuonNHitK_eff[kl][ij]->GetXaxis()->SetTitle(Form("muon eta layer %d", ij+firstLayer));
-	       MuonNHitK_eff[kl][ij]->GetYaxis()->SetTitle(Form("purity (finding %d hits)", kl));
-	       MuonNHitK_eff[kl][ij]->Draw();
-	       //       if(kl == 5 || kl == 13) tc->Print(Form("plotdir/MuonNHitK_eff_L%d_N%d.png", ij+firstLayer, kl), "png");
-
-	       MuonNHitK_eff_tg[kl][ij] = new TGraph();
-	       MuonNHitK_eff_tg[kl][ij]->SetTitle(Form("MuonNHitK_eff_tg_L%d_nH%d",ij, kl));
-	       MuonNHitK_eff_tg[kl][ij]->SetPoint(0, 0, 0);
-	       
-	     }
-	     */
-
 	     if(ij == 0) {
 	       etaRange_eff->SetPoint(0, 0, 0);
 	       etaRange_3H_eff->SetPoint(0, 0, 0);
@@ -1061,207 +1018,6 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 	   etaRange_3H_eff->GetXaxis()->SetRangeUser(30., 55);
 	   etaRange_3H_eff->Draw("ap");
 	   tgEta->Print("plotdir/tgEta_3H.png", "png");
-
-
-	   //tg
-	   /*
-	   for(int iB=1; iB<MuonNHit_eff[0]->GetNbinsX(); ++iB){
-	     int maxLayer = 0;
-	     float effMax = 0;
-	     float avgEta = MuonNHit_eff[0]->GetBinCenter(iB);
-	     for(int ij=0; ij<14; ++ij){
-	       float dummyEff = MuonNHit_eff[ij]->GetBinContent(iB);
-	       if(dummyEff > effMax){
-		 effMax = dummyEff;
-		 maxLayer = ij;
-	       }
-	       // if(ij == 0 && (kl == 13 || kl == 1)){
-	       // 	 std::cout << " layer = " << ij << " nH = " << kl << " avgEta = " << avgEta << " maxLayer = " << maxLayer 
-	       // 		   << " effMax = " << effMax << " dummyEff = " << dummyEff << std::endl;
-	       // }
-	     }
-	     MuonNHit_eff_tg[maxLayer]->SetPoint(MuonNHit_eff_tg[maxLayer]->GetN()+1, avgEta, effMax);
-	     //       if((kl == 13 || kl == 1))std::cout << " avgEta = " << avgEta << " effMax = " << effMax << " iL = " << maxLayer << std::endl;
-	   }
-	   for(int ij=0; ij<14; ++ij)
-	     MuonNHit_eff_tg[ij]->SetPoint(MuonNHit_eff_tg[ij]->GetN()+1, 5., 1.5);
-
-	   //now k tg
-	   for(int kl=0; kl<14; ++kl){
-	     for(int iB=1; iB<MuonNHitK_eff[kl][0]->GetNbinsX(); ++iB){
-	       int maxLayer = 0;
-	       float effMax = 0;
-	       float avgEta = MuonNHitK_eff[kl][0]->GetBinCenter(iB);
-	       for(int ij=0; ij<14; ++ij){
-		 float dummyEff = MuonNHitK_eff[kl][ij]->GetBinContent(iB);
-		 if(dummyEff > effMax){
-		   effMax = dummyEff;
-		   maxLayer = ij;
-		 }
-		 // if(ij == 0 && (kl == 13 || kl == 1)){
-		 //   std::cout << " layer = " << ij << " nH = " << kl << " avgEta = " << avgEta << " maxLayer = " << maxLayer 
-		 // 	     << " effMax = " << effMax << " dummyEff = " << dummyEff << std::endl;
-		 // }
-	       }
-	       MuonNHitK_eff_tg[kl][maxLayer]->SetPoint(MuonNHitK_eff_tg[kl][maxLayer]->GetN()+1, avgEta, effMax);
-	       //       if((kl == 13 || kl == 1))std::cout << " avgEta = " << avgEta << " effMax = " << effMax << " iL = " << maxLayer << std::endl;
-	     }
-	     for(int ij=0; ij<14; ++ij)
-	       MuonNHitK_eff_tg[kl][ij]->SetPoint(MuonNHitK_eff_tg[kl][ij]->GetN()+1, 5., 1.5);
-	   }
-	   std::cout << " fine ciao "<< std::endl;
-
-
-
-
-	   gStyle->SetOptStat(0);
-	   gStyle->SetOptStat(0);
-	   TLegend *legTGM = new TLegend(0.7,0.30,1.,1.,NULL,"brNDC");
-	   legTGM->SetTextFont(42);
-	   legTGM->SetTextSize(0.05);
-	   legTGM->SetFillColor(kWhite);
-	   legTGM->SetLineColor(kWhite);
-	   legTGM->SetShadowColor(kWhite);
-
-	   TCanvas* tcE = new TCanvas();
-	   tcE->cd();
-	   // Muon1stHit_eff[0]->GetXaxis()->SetTitle("muon eta");
-	   // Muon1stHit_eff[0]->SetMarkerColor(iColors[0]);
-	   // Muon1stHit_eff[0]->SetLineColor(kWhite);
-	   // Muon1stHit_eff[0]->SetMarkerStyle(20);
-	   // Muon1stHit_eff[0]->Draw("p");
-	   // for(int ij=0; ij<14; ++ij){
-	   //   Muon1stHit_eff[ij]->SetMarkerColor(iColors[ij]);
-	   //   Muon1stHit_eff[ij]->SetMarkerStyle(20);
-	   //   Muon1stHit_eff[ij]->SetLineColor(kWhite);
-	   //   Muon1stHit_eff[ij]->Draw("same, p");
-	   //   legTGM->AddEntry(Muon1stHit_eff[ij], Form("layer %d", ij+firstLayer), "p");
-	   // }
-	   // gStyle->SetOptStat(0);
-	   // gStyle->SetOptTitle(0);
-	   // Muon1stHit_eff[0]->GetXaxis()->SetRangeUser(1.2, 3.);
-	   // legTGM->Draw("same");
-	   // tcE->Print("plotdir/Muon1stHit_eff.png", "png");
-	   // tcE->Print("plotdir/Muon1stHit_eff.root", "root");
-	   
-
-	   for(int kl=0; kl<14; ++kl){
-	     TLegend *legTGM2 = new TLegend(0.7,0.30,1.,1.,NULL,"brNDC");
-	     legTGM2->SetTextFont(42);
-	     legTGM2->SetTextSize(0.03);
-	     legTGM2->SetFillColor(kWhite);
-	     legTGM2->SetLineColor(kWhite);
-	     legTGM2->SetShadowColor(kWhite);
-
-	     TCanvas* tcNE = new TCanvas();
-	     MuonNHitK_eff[kl][0]->GetXaxis()->SetTitle("muon eta");
-	     MuonNHitK_eff[kl][0]->SetMarkerColor(iColors[0]);
-	     MuonNHitK_eff[kl][0]->SetLineColor(kWhite);
-	     MuonNHitK_eff[kl][0]->SetMarkerStyle(20);
-	     MuonNHitK_eff[kl][0]->Draw("p");
-	     for(int ij=0; ij<14; ++ij){
-	       MuonNHitK_eff[kl][ij]->SetMarkerColor(iColors[ij]);
-	       MuonNHitK_eff[kl][ij]->SetMarkerStyle(20);
-	       MuonNHitK_eff[kl][ij]->SetLineColor(kWhite);
-	       MuonNHitK_eff[kl][ij]->Draw("same, p");
-	       // ok ma per ultimi layer 1,2,3 max hits...
-	       // if(kl < (14 - ij)) legTGM2->AddEntry(MuonNHitK_eff[kl][ij], Form("l. %d (nH. = %d)", ij+firstLayer, kl), "p");
-	       // else legTGM2->AddEntry(MuonNHitK_eff[kl][ij], Form("l. %d (nH. = %d)", ij+firstLayer, 14 - ij), "p");
-	       legTGM2->AddEntry(MuonNHitK_eff[kl][ij], Form("layer %d", ij+firstLayer), "p");
-	     }
-	     gStyle->SetOptStat(0);
-	     MuonNHitK_eff[kl][0]->GetXaxis()->SetRangeUser(1.2, 3.);
-	     MuonNHitK_eff[kl][0]->GetYaxis()->SetRangeUser(0., 1.05);
-	     legTGM2->Draw("same");
-	     tcNE->Print(Form("plotdir/MuonNHitK_eff_N%02d.png", kl), "png");
-	     tcNE->Print(Form("plotdir/MuonNHitK_eff_N%02d.root", kl), "root");
-
-	     if(kl == 1){
-	       legTGM2->Clear();
-	     MuonNHit_eff[0]->GetXaxis()->SetTitle("muon eta");
-	     MuonNHit_eff[0]->SetMarkerColor(iColors[0]);
-	     MuonNHit_eff[0]->SetLineColor(kWhite);
-	     MuonNHit_eff[0]->SetMarkerStyle(20);
-	     MuonNHit_eff[0]->Draw("p");
-	     for(int ij=0; ij<14; ++ij){
-	       MuonNHit_eff[ij]->SetMarkerColor(iColors[ij]);
-	       MuonNHit_eff[ij]->SetMarkerStyle(20);
-	       MuonNHit_eff[ij]->SetLineColor(kWhite);
-	       MuonNHit_eff[ij]->Draw("same, p");
-	       legTGM2->AddEntry(MuonNHit_eff[ij], Form("layer %d ", ij+firstLayer), "p");
-	     }
-	     gStyle->SetOptStat(0);
-	     MuonNHit_eff[0]->GetXaxis()->SetRangeUser(1.2, 3.);
-	     MuonNHit_eff[0]->GetYaxis()->SetRangeUser(0., 1.05);
-	     legTGM2->Draw("same");
-	     tcNE->Print(Form("plotdir/MuonNHit_eff.png", kl), "png");
-	     tcNE->Print(Form("plotdir/MuonNHit_eff.root", kl), "root");
-	     }
-	   }
-
-	   //now plotting tg
-
-	   TLegend *legTGM22 = new TLegend(0.7,0.30,1.,1.,NULL,"brNDC");
-	   legTGM22->Clear();
-	   legTGM22->SetTextFont(42);
-	   legTGM22->SetTextSize(0.03);
-	   legTGM22->SetFillColor(kWhite);
-	   legTGM22->SetLineColor(kWhite);
-	   legTGM22->SetShadowColor(kWhite);
-
-	   //TGraph
-	   TCanvas* tcNEtg = new TCanvas();
-	   tcNEtg->cd();
-	   MuonNHit_eff_tg[0]->GetXaxis()->SetTitle("muon eta");
-	   MuonNHit_eff_tg[0]->SetMarkerColor(iColors[0]);
-	   MuonNHit_eff_tg[0]->SetMarkerStyle(20);
-	   MuonNHit_eff_tg[0]->Draw("ap");
-	   for(int kl=0; kl<14; ++kl){
-	     MuonNHit_eff_tg[kl]->SetMarkerColor(iColors[kl]);
-	     MuonNHit_eff_tg[kl]->SetMarkerStyle(20);
-	     MuonNHit_eff_tg[kl]->SetLineColor(kWhite);
-	     MuonNHit_eff_tg[kl]->Draw("same, p");
-	     legTGM22->AddEntry(MuonNHit_eff_tg[kl], Form("layer %d", kl+firstLayer), "p");
-	   }
-	   gStyle->SetOptStat(0);
-	   gStyle->SetOptTitle(0);
-	   MuonNHit_eff_tg[0]->GetXaxis()->SetRangeUser(1.2, 3.);
-	   MuonNHit_eff_tg[0]->GetYaxis()->SetRangeUser(0., 1.05);
-	   legTGM22->Draw("same");
-	   tcNEtg->Print("plotdir/MuonNHit_eff_tg.png", "png");
-	   tcNEtg->Print("plotdir/MuonNHit_eff_tg.root", "root");
-
-
-	   //now k tg
-	   for(int kl=1; kl<14; ++kl){
-	     legTGM22->Clear();
-	     tcNEtg->cd();
-	     MuonNHitK_eff_tg[kl][0]->GetXaxis()->SetTitle("muon eta");
-	     MuonNHitK_eff_tg[kl][0]->SetMarkerColor(iColors[0]);
-	     MuonNHitK_eff_tg[kl][0]->SetMarkerStyle(20);
-	     MuonNHitK_eff_tg[kl][0]->Draw("ap");
-	     for(int iL=0; iL<14; ++iL){
-	     MuonNHitK_eff_tg[kl][iL]->SetMarkerColor(iColors[iL]);
-	     MuonNHitK_eff_tg[kl][iL]->SetMarkerStyle(20);
-	     MuonNHitK_eff_tg[kl][iL]->SetLineColor(kWhite);
-	     MuonNHitK_eff_tg[kl][iL]->Draw("same, p");
-	     //ok ma...
-	     // if(kl < (14 - iL)) legTGM22->AddEntry(MuonNHitK_eff_tg[kl][iL], Form("l. %d (nH. = %d)", iL+firstLayer, kl), "p");
-	     // else legTGM22->AddEntry(MuonNHitK_eff_tg[kl][iL], Form("l. %d (nH. = %d)", iL+firstLayer, 14 - iL), "p");
-	     legTGM22->AddEntry(MuonNHitK_eff_tg[kl][iL], Form("layer %d", iL+firstLayer), "p");
-	     }
-	   gStyle->SetOptStat(0);
-	   gStyle->SetOptTitle(0);
-	   MuonNHitK_eff_tg[kl][0]->GetXaxis()->SetRangeUser(1.2, 3.);
-	   MuonNHitK_eff_tg[kl][0]->GetYaxis()->SetRangeUser(0., 1.05);
-	   legTGM22->Draw("same");
-	   // tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_L%02d.png", kl+firstLayer), "png");
-	   // tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_L%02d.root", kl+firstLayer), "root");
-	   tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_N%02d.png", kl), "png");
-	   tcNEtg->Print(Form("plotdir/MuonNHit_eff_tg_N%02d.root", kl), "root");
-	   }
-	   */
-
 
 
 	   //topological plots

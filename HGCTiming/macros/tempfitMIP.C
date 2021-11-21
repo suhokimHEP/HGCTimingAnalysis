@@ -55,7 +55,7 @@
 using namespace RooFit;
 //using namespace ROOT::VecOps;
 
-void fitMIP(){
+void tempfitMIP(){
   //int main(){
   gROOT->Reset();
   gROOT->Macro("./setStyle.C");
@@ -68,22 +68,16 @@ void fitMIP(){
   RooRealVar x("x", "", 0.5, 10.5);
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
-  //std::string inputFileList = "Gun50_singlelayer.root";
-  std::string inputFileList = "outMIP_40mu_startup_sn2.0_13.root";
-  std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
-  printf("%s",outtag.c_str());
+  std::string inputFileList = "new.root";
  TFile* inF = TFile::Open(TString(inputFileList));
  TTree* newT = (TTree*)inF->Get("MIPtree");
- std::map<std::pair<int,int>, int> rentries;
-rentries.clear();
-  for(int iL=0; iL <= 14; ++iL){
-  for(int Rn=16; Rn <= 38; ++Rn){
-        int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",Rn,iL));
-        std::pair<int, int> channelPhi = std::pair<int, int>(iL,Rn);
-	rentries[channelPhi] = entries;
+  std::vector<int> Lentries;
+Lentries.clear();
+  for(int ij_L=0; ij_L <= 12; ++ij_L){
+        int entries = newT->GetEntries(Form("MIP_layer==%d",ij_L));
+	Lentries.push_back(entries);
 	printf("%d:\n",entries);
 	}
-  }
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
     //ROOT::RDataFrame d("MIPtree", "outMIP_SoN4.root");
   auto allMIP = d.Histo1D( {"allMIP", "", 120, 0.5, 10.5}, "MIP_val");
@@ -161,10 +155,18 @@ rentries.clear();
   // auto min_iPhi_all = d.Min("MIP_iPhi").GetValue();
   // auto max_iPhi_all = d.Max("MIP_iPhi").GetValue();
 
+  // std::cout << " min_iR = " << min_iR_all << " max_iR = " << max_iR_all 
+  // 	    << " min_iL = " << min_iL << " max_iL = " << max_iL 
+  // 	    << " min_iPhi = " << min_iPhi_all << " max_iPhi = " << max_iPhi_all << std::endl;
 
 
-  for(int ij_L=1; ij_L <= 3; ++ij_L){
-  //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  //std::vector<int> minEvents;
+  //minEvents.push_back(2500);
+  //minEvents.push_back(1000);
+  //int minESize = minEvents.size();
+
+  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  //  for(int ij_L=13; ij_L < max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
@@ -173,28 +175,20 @@ rentries.clear();
     auto min_iR = absRadiiForLayer.Min("abs_MIP_iR").GetValue();
     auto max_iR = absRadiiForLayer.Max("abs_MIP_iR").GetValue();
 
-    for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
-      std::cout << "\n  ==>> Fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
-      //auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                                                
-      //auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val"); 
-      // iR_vs_layer->Fill(ij_L, ij_R, mipH->GetEntries());
+    //for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
+    //  std::cout << "\n  ==>> Fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
 
 
-      // auto filterMinMAx = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };
-      // auto phiForLayerRadii = d.Filter(filterMinMAx, {"MIP_layer", "MIP_iR"});
-      // auto min_iPhi = phiForLayerRadii.Min("MIP_iPhi").GetValue();
-      // auto max_iPhi = phiForLayerRadii.Max("MIP_iPhi").GetValue();
+    //  auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
+    //  auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
 
-
-      auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
-      auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
-      //      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
-       std::pair<int, int> channelPhi = std::pair<int, int>(ij_L,ij_R);
-	int numberOfE = rentries.at(channelPhi);
-	//int numberOfE = 200;
-	auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
+      //for(int minE = 0; minE < minESize; ++minE){
+	int numberOfE = Lentries.at(ij_L);
+	auto mipH = radiiForLayer.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
+	//auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
 
       float nEntries = mipH->GetEntries();
+      //if(nEntries == 0) continue;     
       if(nEntries < numberOfE) continue;     
       RooDataHist locData("locData","locData", xL, Import(*(mipH)) );
 
@@ -219,74 +213,75 @@ rentries.clear();
       TCanvas* cL = new TCanvas();                                                                                                                             
       cL->cd();                                                                                                                                                
       frameL->Draw();                                                                                    
-     
-      cL->Print(Form("singleFits/%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
+      cL->Print(Form("singleFits/mip_L%d_nEvts%d.png", ij_L+firstLayer, numberOfE), ".png"); 
+      //cL->Print(Form("singleFits/mip_L%d_R%d_nEvts%d.png", ij_L+firstLayer, ij_R, numberOfE), ".png"); 
       
       delete cL;
       delete frameL;
       //delete mipH;
-    }
+      //}
+      //}
   }
 
 
-//  TLatex tL;
-//  tL.SetNDC();
-//  tL.SetTextSize(0.05);
-//  tL.SetTextFont(132);
-//
-//  gStyle->SetOptStat(1);
-//  gStyle->SetOptFit(1);
-//  TF1* hfit_layer = new TF1("hfit_layer", "gaus", 0., 2.);
-//
-//  TCanvas* tc_fitVal = new TCanvas();
-//  tc_fitVal->cd();
-//  hfit_layer->SetParameters(MIP_values_layer_ring->GetEntries()/2., 1, 0.02);
-//  MIP_values_layer_ring->GetXaxis()->SetTitle("MPV values for layers and rings");
-//  MIP_values_layer_ring->Draw();
-//  MIP_values_layer_ring->Fit("hfit_layer", "q");
-//  //MIP_values_layer_ring->Fit("hfit_layer", "R");
-//  gPad->Update();
-//  tL.DrawLatex(0.5, 0.8, Form("mean = %.2f +/- %.2f", hfit_layer->GetParameter(1), hfit_layer->GetParError(1)));
-//  tL.DrawLatex(0.5, 0.7, Form("sigma = %.2f +/- %.2f", hfit_layer->GetParameter(2), hfit_layer->GetParError(2)));
-//  tc_fitVal->Print("MIP_values_layer_ring.png", "png");
-//
-//  TF1* hfit_precision = new TF1("hfit_precision", "[0]/sqrt(x) + [1]", 0., 500.);
-//  hfit_precision->SetParameter(1, 0.01);
-//  hfit_precision->SetParameter(0, 0.5);
-//
-//  TCanvas* tc_scatter = new TCanvas();
-//  tc_scatter->cd();
-//  MIPerror_vs_nEntries_layer_ring->Sort();
-//  MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
-//  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
-//  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
-//  MIPerror_vs_nEntries_layer_ring->Draw("ap");
-//  MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision","q");
-//  //MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
-//  gPad->Update();
-//  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
-//  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
-//  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
-//  tc_scatter->Print("MIPerror_vs_nEntries_layer_ring.png", "png");
-//
-//
-//  tc_scatter->cd();
-//  tp_MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
-//  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
-//  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
-//  tp_MIPerror_vs_nEntries_layer_ring->SetMarkerStyle(20);
-//  tp_MIPerror_vs_nEntries_layer_ring->SetLineWidth(2);
-//  tp_MIPerror_vs_nEntries_layer_ring->Draw("e");
-//  hfit_precision->SetParameter(1, 0.01);
-//  hfit_precision->SetParameter(0, 0.5);
-//  tp_MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision","q");
-//  //tp_MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
-//  gPad->Update();
-//  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
-//  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
-//  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
-//  tL.DrawLatex(0.5, 0.5, Form("#Chi^{2} = %.2f", hfit_precision->GetChisquare()/hfit_precision->GetNDF()));
-//  tc_scatter->Print("tp_MIPerror_vs_nEntries_layer_ring.png", "png");
+  TLatex tL;
+  tL.SetNDC();
+  tL.SetTextSize(0.05);
+  tL.SetTextFont(132);
+
+  gStyle->SetOptStat(1);
+  gStyle->SetOptFit(1);
+  TF1* hfit_layer = new TF1("hfit_layer", "gaus", 0., 2.);
+
+  TCanvas* tc_fitVal = new TCanvas();
+  tc_fitVal->cd();
+  hfit_layer->SetParameters(MIP_values_layer_ring->GetEntries()/2., 1, 0.02);
+  MIP_values_layer_ring->GetXaxis()->SetTitle("MPV values for layers and rings");
+  MIP_values_layer_ring->Draw();
+  MIP_values_layer_ring->Fit("hfit_layer", "q");
+  //MIP_values_layer_ring->Fit("hfit_layer", "R");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, Form("mean = %.2f +/- %.2f", hfit_layer->GetParameter(1), hfit_layer->GetParError(1)));
+  tL.DrawLatex(0.5, 0.7, Form("sigma = %.2f +/- %.2f", hfit_layer->GetParameter(2), hfit_layer->GetParError(2)));
+  tc_fitVal->Print("MIP_values_layer_ring.png", "png");
+
+  TF1* hfit_precision = new TF1("hfit_precision", "[0]/sqrt(x) + [1]", 0., 500.);
+  hfit_precision->SetParameter(1, 0.01);
+  hfit_precision->SetParameter(0, 0.5);
+
+  TCanvas* tc_scatter = new TCanvas();
+  tc_scatter->cd();
+  MIPerror_vs_nEntries_layer_ring->Sort();
+  MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
+  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
+  MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
+  MIPerror_vs_nEntries_layer_ring->Draw("ap");
+  MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision","q");
+  //MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
+  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
+  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
+  tc_scatter->Print("MIPerror_vs_nEntries_layer_ring.png", "png");
+
+
+  tc_scatter->cd();
+  tp_MIPerror_vs_nEntries_layer_ring->GetXaxis()->SetTitle("nEntries");
+  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetTitle("precision (%)");
+  tp_MIPerror_vs_nEntries_layer_ring->GetYaxis()->SetRangeUser(0., 100.);
+  tp_MIPerror_vs_nEntries_layer_ring->SetMarkerStyle(20);
+  tp_MIPerror_vs_nEntries_layer_ring->SetLineWidth(2);
+  tp_MIPerror_vs_nEntries_layer_ring->Draw("e");
+  hfit_precision->SetParameter(1, 0.01);
+  hfit_precision->SetParameter(0, 0.5);
+  tp_MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision","q");
+  //tp_MIPerror_vs_nEntries_layer_ring->Fit("hfit_precision");
+  gPad->Update();
+  tL.DrawLatex(0.5, 0.8, "a / sqrt(x) + b");
+  tL.DrawLatex(0.5, 0.7, Form("a = %.2f +/- %.2f", hfit_precision->GetParameter(0), hfit_precision->GetParError(0)));
+  tL.DrawLatex(0.5, 0.6, Form("b = %.2f +/- %.2f", hfit_precision->GetParameter(1), hfit_precision->GetParError(1)));
+  tL.DrawLatex(0.5, 0.5, Form("#Chi^{2} = %.2f", hfit_precision->GetChisquare()/hfit_precision->GetNDF()));
+  tc_scatter->Print("tp_MIPerror_vs_nEntries_layer_ring.png", "png");
 
   /*
   TCanvas* tc_occu = new TCanvas();

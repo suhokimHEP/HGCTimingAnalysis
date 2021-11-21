@@ -1,11 +1,11 @@
 #!/bin/bash
 
 samples=( \
-"Gun50"
+"40mu_startup_sn2.0"
 )
 for rawsample in ${samples[@]}
 do
- for num in {1..61}
+ for num in {13..13}
   do
    sample=${rawsample}"_"${num}
    echo ${sample}
