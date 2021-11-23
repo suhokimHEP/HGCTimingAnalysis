@@ -1,11 +1,14 @@
 #!/bin/bash
+python Setupmake.py
 doSubmit=true
 modes=( \ 
- "fixed40mu_startup_sn2.0"       \
+# "NeutrinoGun_startup_sn2.0"       \
+ "Rand40mu_startup_sn2.0"       \
 # "40mu_startup_sn2.0"       \
+# "old_startup_sn2.0"       \
 # "old_startup_sn2.5"       \
 # "old_startup_sn3.0"       \
-# "old"       \
+# "old_startup_sn4.0"       \
 # "old_startup"       \
 # "old_eol"       \
 # "old_startup_sn2.0"       \
@@ -13,7 +16,7 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=1
+upnum=3
 
 makeasubmitdir () {
 # write base for submit file

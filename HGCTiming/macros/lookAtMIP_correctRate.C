@@ -315,8 +315,8 @@ int lookAtMIP_correctRate(TString filename, TString aversion){
 
 	   int nEvents = newT->GetEntries();
 	   std::cout << " nEvents = " << nEvents << std::endl;
-	   //for(int ij=0; ij<nEvents; ++ij){
-	   for(int ij=0; ij<40; ++ij){
+	   for(int ij=0; ij<nEvents; ++ij){
+	   //for(int ij=0; ij<40; ++ij){
 	  if (ij%10 == 0){ std::cout << " entry " << ij << std::endl; }
 	     //for(int ij=14; ij<16; ++ij){
 	     newT->GetEntry(ij);
