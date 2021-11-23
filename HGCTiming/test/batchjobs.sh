@@ -16,7 +16,7 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=3
+upnum=46
 
 makeasubmitdir () {
 # write base for submit file
