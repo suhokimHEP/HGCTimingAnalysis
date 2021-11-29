@@ -81,7 +81,7 @@ rentries.clear();
         int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",Rn,iL));
         std::pair<int, int> channelPhi = std::pair<int, int>(iL,Rn);
 	rentries[channelPhi] = entries;
-	printf("%d:\n",entries);
+	//printf("%d:\n",entries);
 	}
   }
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
@@ -98,12 +98,14 @@ rentries.clear();
   w.import(x);
   w.factory("nNoise[10, 0, 1.e4]"); 
   w.factory("nSig[1.e5, 0.0, 1.e6]");   
+  //w.factory("nSig[0.0, 0.0, 0.0]");   
 
   w.factory("RooLandau::landau(x, m_landau[1.1, 0.5, 5.], s_landau[0.2, 0.01, 0.5])");
   w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.1, 0.01, 1.])");
+  //w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.15, 0.01, .633])");
   w.factory("RooFFTConvPdf::lxg(x, landau, gauss)");
 
-  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.5, 0.01, 2.])");
+  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.15, 0.01, 0.633])");
   w.factory("SUM::model(nNoise * gaussB, nSig* lxg)");
   RooAbsPdf * model = w.pdf("model");
 
@@ -135,13 +137,14 @@ rentries.clear();
 
   RooRealVar xL("xL", "", 0.5, 10.5);
   w.import(xL);
-  w.factory("nNoise_l[10, 0, 1.e4]"); 
-  w.factory("nSig_l[1.e5, 0.0, 1.e6]");   
+  w.factory("nNoise_l[1.e3, 0, 1.e4]"); 
+  //w.factory("nSig_l[1.e5, 0.0, 1.e6]");   
+  w.factory("nSig_l[2.e3, 0.0, 2.e4]");   
 
   w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.5])");
   w.var("m_gaussNoise")->setConstant();
   w.var("s_gaussNoise")->setConstant();
-  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 1.])");
+  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.15, 0.01, 0.633])");
   w.factory("RooFFTConvPdf::lxgL(xL, landauL, gaussL)");
   w.factory("RooGaussian::gaussBL(xL, m_gaussNoise, s_gaussNoise)");
   w.factory("SUM::modelL(nNoise_l * gaussBL, nSig_l* lxgL)");
@@ -163,8 +166,8 @@ rentries.clear();
 
 
 
-  for(int ij_L=1; ij_L <= 3; ++ij_L){
-  //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  //for(int ij_L=1; ij_L <= 3; ++ij_L){
+  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
