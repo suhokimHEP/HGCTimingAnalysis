@@ -69,7 +69,7 @@ void fitMIP(){
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
   //std::string inputFileList = "Gun50_singlelayer.root";
-  std::string inputFileList = "outMIP_40mu_startup_sn2.0_13.root";
+  std::string inputFileList = "Rand40mu_startup_sn2.0.root";
   std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
   printf("%s",outtag.c_str());
  TFile* inF = TFile::Open(TString(inputFileList));
