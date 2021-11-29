@@ -1,7 +1,7 @@
 #!/bin/bash
 input=text
-output=NeutrinoGun
-mode=startup_sn2.0
+output=Rand40mu
+mode=eol
 HGCP=/eos/cms/store/group/dpg_hgcal/comm_hgcal/suhokim/${output}
 find ${HGCP}/RECO/*${mode}*root > ${input}.list
 #sed -i "s/\/eos\/cms/root:\/\/cms-xrd-global.cern.ch\//g" ${input}.list

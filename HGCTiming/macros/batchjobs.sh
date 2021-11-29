@@ -1,8 +1,8 @@
 #!/bin/bash
-python Setupmake.py
 doSubmit=true
 modes=( \ 
- "Rand40mu_startup_sn2.0"       \
+ "Rand40mu_eol"       \
+# "Rand40mu_startup_sn2.0"       \
 # "40mu_startup_sn2.0" \
 # "old_startup_sn2.0"       \
 # "old_startup_sn2.5"       \
@@ -12,7 +12,7 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=46
+upnum=44
 
 makeasubmitdir () {
 # write base for submit file
@@ -42,7 +42,7 @@ makeasubmitdir () {
  printf "\n" >> submitfile
  until [ ${num} -gt ${upnum} ]
  do
- printf "Transfer_Input_Files = ${origindir}/CMSSW_12_1_0_pre4.tar.gz,${origindir}/lookAtMIP_correctRate.C,${origindir}/setStyle.C,${origindir}/../test/gitignore/${mode}/${mode}_${num}.root\n" >> submitfile 
+ printf "Transfer_Input_Files = ${origindir}/../test/CMSSW_12_1_0_pre4.tar.gz,${origindir}/lookAtMIP_correctRate.C,${origindir}/setStyle.C,${origindir}/../test/gitignore/${mode}/${mode}_${num}.root\n" >> submitfile 
  printf "Arguments = ${mode} ${num}\n" >> submitfile
  printf "Queue\n" >> submitfile
  printf "\n" >> submitfile
