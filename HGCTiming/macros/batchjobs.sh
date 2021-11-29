@@ -1,4 +1,5 @@
 #!/bin/bash
+python Setupmake.py
 doSubmit=true
 modes=( \ 
  "Rand40mu_startup_sn2.0"       \
@@ -11,7 +12,7 @@ modes=( \
 # "startup"       \
 ) 
 num=0
-upnum=3
+upnum=46
 
 makeasubmitdir () {
 # write base for submit file
