@@ -69,19 +69,23 @@ void fitMIP(){
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
   //std::string inputFileList = "Gun50_singlelayer.root";
-  std::string inputFileList = "Rand40mu_startup_sn2.0.root";
+  //std::string inputFileList = "Rand40mu_startup_sn2.0.root";
+  std::string inputFileList = "Rand40mu_eol.root";
   std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
   printf("%s",outtag.c_str());
  TFile* inF = TFile::Open(TString(inputFileList));
  TTree* newT = (TTree*)inF->Get("MIPtree");
  std::map<std::pair<int,int>, int> rentries;
+ std::map<std::pair<int,int>, int> MIPentries;
 rentries.clear();
   for(int iL=0; iL <= 14; ++iL){
   for(int Rn=16; Rn <= 38; ++Rn){
         int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",Rn,iL));
+        int Mentries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d&&MIP_val<0.543",Rn,iL));
         std::pair<int, int> channelPhi = std::pair<int, int>(iL,Rn);
 	rentries[channelPhi] = entries;
-	//printf("%d:\n",entries);
+	MIPentries[channelPhi] = Mentries;
+	printf("%d:%d:%d\n",iL,Rn,Mentries);
 	}
   }
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
@@ -96,16 +100,15 @@ rentries.clear();
   RooDataHist dataHist("dataHist","dataHist", x, Import(*(allMIP)) ); 
   
   w.import(x);
-  w.factory("nNoise[10, 0, 1.e4]"); 
+  w.factory("nNoise[400, 200, 1.e4]"); 
   w.factory("nSig[1.e5, 0.0, 1.e6]");   
-  //w.factory("nSig[0.0, 0.0, 0.0]");   
 
   w.factory("RooLandau::landau(x, m_landau[1.1, 0.5, 5.], s_landau[0.2, 0.01, 0.5])");
   w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.1, 0.01, 1.])");
-  //w.factory("RooGaussian::gauss(x, m_gauss[0.0, 0.0, 0.], s_gauss[0.15, 0.01, .633])");
   w.factory("RooFFTConvPdf::lxg(x, landau, gauss)");
 
-  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.15, 0.01, 0.633])");
+  w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.633, 0.632, 0.634])");
+  //w.factory("RooGaussian::gaussB(x, m_gaussNoise[0., 0., 0.], s_gaussNoise[0.15, 0.01, 0.633])");
   w.factory("SUM::model(nNoise * gaussB, nSig* lxg)");
   RooAbsPdf * model = w.pdf("model");
 
@@ -137,14 +140,15 @@ rentries.clear();
 
   RooRealVar xL("xL", "", 0.5, 10.5);
   w.import(xL);
-  w.factory("nNoise_l[1.e3, 0, 1.e4]"); 
-  //w.factory("nSig_l[1.e5, 0.0, 1.e6]");   
   w.factory("nSig_l[2.e3, 0.0, 2.e4]");   
+	int tempo = 400;
+	printf("%d::::::::::\n",tempo);
+  w.factory(Form("nNoise_l[5.e2, %d, 5.e3]",tempo)); 
 
   w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.5])");
   w.var("m_gaussNoise")->setConstant();
   w.var("s_gaussNoise")->setConstant();
-  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.15, 0.01, 0.633])");
+  w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 1.])");
   w.factory("RooFFTConvPdf::lxgL(xL, landauL, gaussL)");
   w.factory("RooGaussian::gaussBL(xL, m_gaussNoise, s_gaussNoise)");
   w.factory("SUM::modelL(nNoise_l * gaussBL, nSig_l* lxgL)");
@@ -166,8 +170,8 @@ rentries.clear();
 
 
 
-  //for(int ij_L=1; ij_L <= 3; ++ij_L){
-  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  for(int ij_L=1; ij_L <= 2; ++ij_L){
+  //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
@@ -178,6 +182,7 @@ rentries.clear();
 
     for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
       std::cout << "\n  ==>> Fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
+       std::pair<int, int> channelPhi = std::pair<int, int>(ij_L,ij_R);
       //auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                                                
       //auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val"); 
       // iR_vs_layer->Fill(ij_L, ij_R, mipH->GetEntries());
@@ -192,7 +197,6 @@ rentries.clear();
       auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
       auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
       //      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
-       std::pair<int, int> channelPhi = std::pair<int, int>(ij_L,ij_R);
 	int numberOfE = rentries.at(channelPhi);
 	//int numberOfE = 200;
 	auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");

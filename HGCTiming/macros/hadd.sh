@@ -1,7 +1,8 @@
 #!/bin/bash
 
 cversions=( \
- "Rand40mu_startup_sn2.0" \
+ "Rand40mu_eol" \
+# "Rand40mu_startup_sn2.0" \
 )
 
 

@@ -60,7 +60,7 @@ using namespace RooFit;
     float a, b, c, d, e, f, g, h, i, j, k,l,m,n,o,p,q,r,s,t,u,v;
   };
 
-void tryMIP(){
+void tempNeutMIP(){
   //int main(){
   gROOT->Reset();
   gROOT->Macro("./setStyle.C");
@@ -80,18 +80,41 @@ void tryMIP(){
   }
   std::string line;
 int linecount =0;
-std::pair<int, spread> fitspread;
-std::vector<pair<int,spread>> spreadmap;
+std::pair<int, vector<float>> fitspread;
+std::vector<pair<int,vector<float>>> spreadmap;
+vector<float> vecspr;
 spread spr;
   while (getline(infile, line)) {
     std::stringstream linestream(line);
     linestream >> spr.a >> spr.b>> spr.c >>spr.d >>spr.e >>spr.f >>spr.g >>spr.h >>spr.i >>spr.j >>spr.k >>spr.l >>spr.m >>spr.n >>spr.o >>spr.p >>spr.q >>spr.r >>spr.s >>spr.t >>spr.u >>spr.v;
-    fitspread.second = spr;
+    vecspr.push_back(spr.a);
+    vecspr.push_back(spr.b);
+    vecspr.push_back(spr.c);
+    vecspr.push_back(spr.d);
+    vecspr.push_back(spr.e);
+    vecspr.push_back(spr.f);
+    vecspr.push_back(spr.g);
+    vecspr.push_back(spr.h);
+    vecspr.push_back(spr.i);
+    vecspr.push_back(spr.j);
+    vecspr.push_back(spr.k);
+    vecspr.push_back(spr.l);
+    vecspr.push_back(spr.m);
+    vecspr.push_back(spr.n);
+    vecspr.push_back(spr.o);
+    vecspr.push_back(spr.p);
+    vecspr.push_back(spr.q);
+    vecspr.push_back(spr.r);
+    vecspr.push_back(spr.s);
+    vecspr.push_back(spr.t);
+    vecspr.push_back(spr.u);
+    vecspr.push_back(spr.v);
+    fitspread.second = vecspr;
     fitspread.first = linecount;
     spreadmap.push_back(fitspread);
+    vecspr.clear();
     linecount++;
    } 
-  printf("%f\n",spreadmap[1].second.j);
   std::string inputFileList = "Rand40mu_eol.root";
   std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
   printf("%s",outtag.c_str());
@@ -110,8 +133,7 @@ spread spr;
   
   ///single tile fits
   int firstLayer = 37;
-  for(int ij_L=min_iL; ij_L <= 2; ++ij_L){
-  //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
@@ -126,6 +148,9 @@ spread spr;
 
         int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",ij_R,ij_L));
         int Mentries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d&&MIP_val<0.543",ij_R,ij_L));
+        float tilespr = spreadmap[ij_L].second[ij_R-min_iR];
+	if(tilespr==0.) tilespr=.3168;
+  printf("%f\n",tilespr);
   RooWorkspace w("w");    
   RooRealVar xL("xL", "", 0.5, 10.5);
   w.import(xL);
@@ -135,7 +160,8 @@ spread spr;
   w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.5])");
   w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 1.])");
   w.factory("RooFFTConvPdf::lxgL(xL, landauL, gaussL)");
-  w.factory("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[0.633])");
+  w.factory(Form("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[%f])",tilespr));
+  //w.factory("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[0.633])");
   w.factory("SUM::modelL(nNoise_l * gaussBL, nSig_l* lxgL)");
   RooAbsPdf * modelL = w.pdf("modelL");
 
@@ -184,7 +210,7 @@ spread spr;
       cL->cd();                                                                                                                                                
       frameL->Draw();                                                                                    
      
-      cL->Print(Form("singleFits/%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
+      cL->Print(Form("singleFits/wNeutfit_%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
       
       delete cL;
       delete frameL;

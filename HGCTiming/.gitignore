@@ -3,4 +3,5 @@
 **/gitignore
 *list
 *plots*
+*.png
 python/*cache*
