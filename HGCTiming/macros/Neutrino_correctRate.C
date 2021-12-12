@@ -43,7 +43,7 @@ float getXmax(TH1F* histo, float& YMax){
 
 
 int Neutrino_correctRate(){
-	TString filename="Neutfit_eol";
+	TString filename="Neutfit_startup_sn2.0_40";
 	TString outname = "outMIP_"+filename;
 	  gROOT->Macro("./setStyle.C");
 
@@ -55,7 +55,7 @@ int Neutrino_correctRate(){
 	  gStyle->SetOptFit(1);
 
 	  std::cout << " inizio ci sono " << std::endl; 
-	  TFile* inF = TFile::Open(filename+".root");
+	  TFile* inF = TFile::Open("../test/"+filename+".root");
 	  //TFile* inF = TFile::Open("../test/gitignore/"+aversion+"/"+filename+".root");
 	  //TFile* inF = TFile::Open("root://cmsxrootd.fnal.gov//store/user/skim2/"+filename);
 

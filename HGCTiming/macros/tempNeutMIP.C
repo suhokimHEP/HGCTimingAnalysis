@@ -73,7 +73,7 @@ void tempNeutMIP(){
 
   //std::string inputFileList = "Gun50_singlelayer.root";
   //std::string inputFileList = "Rand40mu_startup_sn2.0.root";
-  std::string spreadFileList = "try.tex";
+  std::string spreadFileList = "oldspread.tex";
   std::ifstream infile(spreadFileList);
   if (!infile.is_open()) {
     std::cout << "Unable to open '" << spreadFileList << "'" << std::endl;
@@ -133,7 +133,8 @@ spread spr;
   
   ///single tile fits
   int firstLayer = 37;
-  for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
+  for(int ij_L=8; ij_L <= 8; ++ij_L){
+  //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
     auto filterMinMAx = [ij_L](int lval) { return (ij_L == lval); };
@@ -180,8 +181,8 @@ spread spr;
       auto filterSel = [ij_L, ij_R](int lval, int rval) { return (ij_L == lval && ij_R == rval); };                            
       auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
       //      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
-	int numberOfE = entries;
-	//int numberOfE = 200;
+	//int numberOfE = entries;
+	int numberOfE = 8000;
 	auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
 
       float nEntries = mipH->GetEntries();
@@ -210,7 +211,7 @@ spread spr;
       cL->cd();                                                                                                                                                
       frameL->Draw();                                                                                    
      
-      cL->Print(Form("singleFits/wNeutfit_%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
+      cL->Print(Form("singleFits/Uncer_wNeutfit_%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
       
       delete cL;
       delete frameL;

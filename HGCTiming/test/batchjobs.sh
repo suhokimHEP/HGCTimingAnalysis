@@ -1,8 +1,16 @@
 #!/bin/bash
-python Setupmake.py
+#python Setupmake.py
 doSubmit=true
 modes=( \ 
  "Rand40mu_eol"       \
+ "Rand40mu_startup"       \
+ "Rand40mu_startup_sn2.0"       \
+ "Rand40mu_startup_sn4.0"       \
+# "Neutfit_eol"       \
+# "Neutfit_startup"       \
+# "Neutfit_startup_sn2.0"       \
+# "Neutfit_startup_sn4.0"       \
+# "Rand40mu_eol"       \
 # "NeutrinoGun_startup_sn2.0"       \
 # "Rand40mu_startup_sn2.0"       \
 # "40mu_startup_sn2.0"       \
@@ -16,16 +24,16 @@ modes=( \
 # "Gun50"       \
 # "startup"       \
 ) 
-num=0
-upnum=44
 
 makeasubmitdir () {
+num=0
+upnum=49
 # write base for submit file
- printf "Making submits for $3\n"
+ printf "Making submits for $1\n"
 
  # go to the directory
  origindir=$(pwd)
- submitdir=$(pwd)/gitignore/$3/
+ submitdir=$(pwd)/gitignore/$1/
  mkdir -p ${submitdir}
  pushd    ${submitdir}  > /dev/null
  printf " The directory is %s\n" $(pwd)
@@ -67,6 +75,6 @@ makeasubmitdir () {
 
 for mode in ${modes[@]}
 do 
- makeasubmitdir ${num} ${upnum} ${mode}
+ makeasubmitdir ${mode}
 done
 

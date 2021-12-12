@@ -81,7 +81,8 @@ void fitNeutrino(){
   gStyle->SetOptFit(0);
   gStyle->SetOptTitle(0);
  
-  std::string inputFileList = "outMIP_Neutfit_eol.root";
+  std::string nametag = "outMIP_Neutfit_startup_sn2.0";
+  std::string inputFileList = nametag+".root";
   std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
   printf("%s",outtag.c_str());
  TFile* inF = TFile::Open(TString(inputFileList));
@@ -91,7 +92,7 @@ void fitNeutrino(){
 rentries.clear();
 	TCanvas*canvas1 = new TCanvas();
  FILE * outfulltable;
-      outfulltable = fopen("try.tex","w");
+      outfulltable = fopen(Form("%s.tex",nametag.c_str()),"w");
 
   for(int iL=0; iL <= 14; ++iL){
   for(int Rn=16; Rn <= 38; ++Rn){
@@ -145,7 +146,7 @@ rentries.clear();
 	Punzi->DrawTextNDC(0.8,0.21,"mean:"+(TString)lumistring3);	
 	SEnt->DrawTextNDC(0.8,0.26,"spread:"+(TString)lumistring4);	
 
-      canvas1->Print(Form("singleFits/fitNeutrino_mip_L%d_R%d_nEvts%d.png",iL,Rn,entries), ".png"); 
+      canvas1->Print(Form("singleFits/%s_L%d_R%d_nEvts%d.png",nametag.c_str(),iL,Rn,entries), ".png"); 
 	}
         fprintf (outfulltable, "\n");		
   }
