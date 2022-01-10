@@ -56,7 +56,7 @@ using namespace RooFit;
 using namespace std;
 //using namespace ROOT::VecOps;
 
-void fitNeutrino(){
+void fitRegLine(){
  TText* title = new TText(1,1,"") ;
  title->SetTextSize(0.04);
  title->SetTextColor(kBlack);
@@ -99,10 +99,117 @@ void fitNeutrino(){
   gStyle->SetOptTitle(0);
  
   std::string nametag = "startup";
-  std::string inputFileList = "outMIP_Neutfit_"+nametag+".root";
-  std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
-  printf("%s",outtag.c_str());
- TFile* inF = TFile::Open(TString(inputFileList));
+  //std::string nametag = "eol";
+  std::string line;
+  std::string block;
+  std::vector<vector<float>> meanmap;
+  std::vector<vector<float>> errmap;
+
+  std::string meanstr = "tex/mlandau_"+nametag+".tex";
+  std::ifstream meanfile(meanstr);
+  if (!meanfile.is_open()) {
+    std::cout << "Unable to open '" << meanstr << "'" << std::endl;
+  }
+  while (getline(meanfile, line)) {
+    std::stringstream linestream(line);
+  std::vector<float> meanline;
+  while (linestream>>block) {
+	meanline.push_back(stof(block)); 
+	}
+	meanmap.push_back(meanline); 
+	}
+
+  std::string errstr = "tex/mlandauerr_"+nametag+".tex";
+  std::ifstream errfile(errstr);
+  if (!errfile.is_open()) {
+    std::cout << "Unable to open '" << errstr << "'" << std::endl;
+  }
+  while (getline(errfile, line)) {
+    std::stringstream linestream(line);
+  std::vector<float> errline;
+  while (linestream>>block) {
+	errline.push_back(stof(block)); 
+	}
+	errmap.push_back(errline); 
+	}
+  int start=1;
+   TCanvas *c1 = new TCanvas("c1","A Simple Graph Example",700,700);
+    Double_t x[100], y[100], e[100], r[100], m[100];  
+  for (Int_t i=0;i<meanmap.size();i++) {
+   int refnum =meanmap[i][0];
+   int graphcount =0;
+   for (Int_t j=start;j<meanmap[i].size();j++) {
+     y[j-start] = meanmap[i][j];
+     e[j-start] = errmap[i][j];
+     r[j-start] = e[j-start]/y[j-start];
+     m[j-start] = r[j-start]/r[0];
+     x[j-start] = refnum+j-start;
+	graphcount++;
+   	}
+   TGraph* gr = new TGraph(graphcount,x,y);
+	gr->Fit("pol1");
+	gr->GetYaxis()->SetTitleOffset(1.75);
+	gr->GetYaxis()->SetTitleSize(0.04);
+	gr->GetYaxis()->SetLabelSize(0.04);
+	gr->GetXaxis()->SetTitleSize(0.04);
+	gr->GetXaxis()->SetLabelSize(0.04);
+	gr->GetYaxis()->SetTitle("m_landau(MIP peak)");
+	gr->GetXaxis()->SetTitle("i#eta");
+	float correlation = gr->GetCorrelationFactor();
+	if(correlation>0.3) gr->Draw("AP");
+	else gr->Draw("P");
+     title->DrawTextNDC(0.2,0.96,"CMS");
+     extra->DrawTextNDC(0.28,0.96,"Work In Progress");
+     extra2->DrawTextNDC(0.51,0.96,Form("Phase2 m_landau vs Ring %s",nametag.c_str()));
+	Ent->DrawTextNDC(0.8,0.81,Form("L=%d, R^{2}:%f",i+37,correlation));	
+      c1->Print(Form("Corr/Corr_%s_L%d.png",nametag.c_str(),i+37), ".png"); 
+   TGraph* gr2 = new TGraph(graphcount,x,r);
+	gr2->Fit("pol1");
+	gr2->GetYaxis()->SetTitleOffset(2.25);
+	gr2->GetYaxis()->SetTitleSize(0.04);
+	gr2->GetYaxis()->SetLabelSize(0.04);
+	gr2->GetXaxis()->SetTitleSize(0.04);
+	gr2->GetXaxis()->SetLabelSize(0.04);
+	gr2->GetYaxis()->SetTitle("#frac{e_landau}{m_landau}(MIP peak)");
+	gr2->GetXaxis()->SetTitle("i#eta");
+	float ecorrelation = gr2->GetCorrelationFactor();
+	if(ecorrelation>0.3) gr2->Draw("AP");
+	else gr2->Draw("P");
+     title->DrawTextNDC(0.2,0.96,"CMS");
+     extra->DrawTextNDC(0.28,0.96,"Work In Progress");
+     extra2->DrawTextNDC(0.51,0.96,Form("Phase2 Resolution vs Ring %s",nametag.c_str()));
+	Ent->DrawTextNDC(0.8,0.81,Form("L=%d, R^{2}:%f",i+37,ecorrelation));	
+      c1->Print(Form("Corr/ErrCorr_%s_L%d.png",nametag.c_str(),i+37), ".png"); 
+   TGraph* gr3 = new TGraph(graphcount,x,m);
+	gr3->Fit("pol1");
+	gr3->GetYaxis()->SetTitleOffset(3.25);
+	gr3->GetYaxis()->SetTitleSize(0.02);
+	gr3->GetYaxis()->SetLabelSize(0.04);
+	gr3->GetXaxis()->SetTitleSize(0.04);
+	gr3->GetXaxis()->SetLabelSize(0.04);
+	gr3->GetYaxis()->SetTitle("#frac{#frac{e_landau}{m_landau}}{#frac{e_landau}{m_landau}_{InnMost}} (MIP peak)");
+	gr3->GetXaxis()->SetTitle("i#eta");
+	float mcorrelation = gr3->GetCorrelationFactor();
+	if(mcorrelation>0.3) gr3->Draw("AP");
+	else gr3->Draw("P");
+     title->DrawTextNDC(0.2,0.96,"CMS");
+     extra->DrawTextNDC(0.28,0.96,"Work In Progress");
+     extra2->DrawTextNDC(0.51,0.96,Form("Phase2 Resolution(unit-ref) vs Ring %s",nametag.c_str()));
+	Ent->DrawTextNDC(0.8,0.81,Form("L=%d, R^{2}:%f",i+37,mcorrelation));	
+      c1->Print(Form("Corr/RefErrCorr_%s_L%d.png",nametag.c_str(),i+37), ".png"); 
+  	// gr->Draw("AC*");
+   }
+
+
+
+ /*
+  std::string errstr = "tex/mlandau_"+nametag+".tex";
+  std::ifstream errfile(errstr);
+  if (!errfile.is_open()) {
+    std::cout << "Unable to open '" << errstr << "'" << std::endl;
+  }
+
+
  TTree* newT = (TTree*)inF->Get("MIPtree");
  std::map<std::pair<int,int>, int> rentries;
  std::map<std::pair<int,int>, int> MIPentries;
@@ -111,7 +218,7 @@ rentries.clear();
  FILE * outfulltable;
       outfulltable = fopen(Form("%s.tex",outtag.c_str()),"w");
 
-  for(int iL=0; iL <= 13; ++iL){
+  for(int iL=0; iL <= 4; ++iL){
   for(int Rn=16; Rn <= 38; ++Rn){
         int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",Rn,iL));
         //int Mentries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d&&MIP_val<0.543",Rn,iL));
@@ -167,12 +274,12 @@ rentries.clear();
 	SEnt->DrawTextNDC(0.8,0.26,"spread:"+(TString)lumistring4);	
      title->DrawTextNDC(0.2,0.96,"CMS");
      extra->DrawTextNDC(0.3,0.96,"Work In Progress");
-     extra2->DrawTextNDC(0.51,0.96,Form("Phase2 Noise fit %s",nametag.c_str()));
+     extra2->DrawTextNDC(0.51,0.96,"Phase2 Noise fit");
 
       canvas1->Print(Form("NeutrinoFits/NeutrinoFits_%s_L%d_R%d_nEvts%d.png",nametag.c_str(),iL,Rn,entries), ".png"); 
 	}
         fprintf (outfulltable, "\n");		
-  }
+   }*/
 }
 
 

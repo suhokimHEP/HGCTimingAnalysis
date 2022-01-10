@@ -1,7 +1,9 @@
 *.root
-*tar.gz
+*.tar.gz
 **/gitignore
-*list
-*plots*
+**/plots
+*.list
 *.png
+*.pdf
+*.tex
 python/*cache*

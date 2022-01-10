@@ -69,11 +69,46 @@ void tempNeutMIP(){
   gStyle->SetOptFit(0);
   gStyle->SetOptTitle(0);
  
+ TText* title = new TText(1,1,"") ;
+ title->SetTextSize(0.04);
+ title->SetTextColor(kBlack);
+ title->SetTextAlign(11);
+ title->SetTextFont(62);
+ 
+ TText* extra = new TText(1,1,"") ;
+ extra->SetTextSize(0.03);
+ extra->SetTextColor(kBlack);
+ extra->SetTextAlign(11);
+ extra->SetTextFont(52);
+   
+ TText* extra2 = new TText(1,1,"") ;
+ extra2->SetTextSize(0.025);
+ extra2->SetTextColor(kBlack);
+ extra2->SetTextAlign(11);
+ extra2->SetTextFont(62);
+ TText* LRInfo = new TText(1,1,"") ;
+ LRInfo->SetTextSize(0.025);
+ LRInfo->SetTextColor(kBlack);
+ LRInfo->SetTextAlign(11);
+ LRInfo->SetTextFont(62);
+
+    char lumistring [50];
+     int dummy; 
+
+
   //  RooDataSet data ("data", "data", RooArgSet(x));
 
   //std::string inputFileList = "Gun50_singlelayer.root";
   //std::string inputFileList = "Rand40mu_startup_sn2.0.root";
-  std::string spreadFileList = "oldspread.tex";
+  //std::string nametag = "startup";
+  std::string nametag = "eol";
+ FILE * outfulltable;
+ FILE * outfulltable2;
+ FILE * outfulltable3;
+      outfulltable = fopen(Form("tex/mlandau_%s.tex",nametag.c_str()),"w");
+      outfulltable2 = fopen(Form("tex/mlandauerr_%s.tex",nametag.c_str()),"w");
+      outfulltable3 = fopen(Form("tex/mlandaurat_%s.tex",nametag.c_str()),"w");
+  std::string spreadFileList = "outMIP_Neutfit_"+nametag+".tex";
   std::ifstream infile(spreadFileList);
   if (!infile.is_open()) {
     std::cout << "Unable to open '" << spreadFileList << "'" << std::endl;
@@ -115,7 +150,7 @@ spread spr;
     vecspr.clear();
     linecount++;
    } 
-  std::string inputFileList = "Rand40mu_eol.root";
+  std::string inputFileList = "Rand40mu_"+nametag+".root";
   std::string outtag = inputFileList.substr(0,inputFileList.find(".root"));
   printf("%s",outtag.c_str());
   ROOT::RDataFrame d("MIPtree", inputFileList.c_str());
@@ -133,7 +168,7 @@ spread spr;
   
   ///single tile fits
   int firstLayer = 37;
-  for(int ij_L=8; ij_L <= 8; ++ij_L){
+  for(int ij_L=min_iL; ij_L <= 8; ++ij_L){
   //for(int ij_L=min_iL; ij_L <= max_iL; ++ij_L){
     std::cout << " fitting for layer = " << ij_L << std::endl;
 
@@ -142,27 +177,34 @@ spread spr;
     auto absRadiiForLayer = radiiForLayer.Define("abs_MIP_iR", "std::abs(MIP_iR)");
     auto min_iR = absRadiiForLayer.Min("abs_MIP_iR").GetValue();
     auto max_iR = absRadiiForLayer.Max("abs_MIP_iR").GetValue();
+        //fprintf (outfulltable, "%f  ", min_iR);		
+        //fprintf (outfulltable2, "%f  ", min_iR);		
+        //fprintf (outfulltable, "%f  ", max_iR);		
+        //fprintf (outfulltable2, "%f  ", max_iR);		
 
-
+ bool minbool = true;
+  //for(int ij_R=23; ij_R <= 23; ++ij_R){
   for(int ij_R=min_iR; ij_R <= max_iR; ++ij_R){
       std::cout << "\n  ==>> Fitting for layer = " << ij_L << " ring = " << ij_R << std::endl;
 
         int entries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d",ij_R,ij_L));
-        int Mentries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d&&MIP_val<0.543",ij_R,ij_L));
+        int Mentries = newT->GetEntries(Form("MIP_iR==%d&&MIP_layer==%d&&MIP_val<0.58",ij_R,ij_L));
         float tilespr = spreadmap[ij_L].second[ij_R-min_iR];
 	if(tilespr==0.) tilespr=.3168;
   printf("%f\n",tilespr);
   RooWorkspace w("w");    
   RooRealVar xL("xL", "", 0.5, 10.5);
   w.import(xL);
-  w.factory("nSig_l[2.e3, 0.0, 2.e4]");   
-  w.factory(Form("nNoise_l[5.e2, %d, 5.e3]",Mentries)); 
+  w.factory("nSig_l[6.e3, 3.e3, 2.e4]");   
+  //w.factory("nSig_l[2.e3, 0.0, 2.e4]");   
+  //w.factory(Form("nNoise_l[1.e2, 50, 3.e2]")); 
+  w.factory(Form("nNoise_l[4.e2, %d, 1.e4]",Mentries)); 
 
   w.factory("RooLandau::landauL(xL, m_landau_l[1.1, 0.5, 5.], s_landau_l[0.2, 0.01, 0.5])");
   w.factory("RooGaussian::gaussL(xL, m_gauss_l[0.0, 0.0, 0.], s_gauss_l[0.1, 0.01, 1.])");
   w.factory("RooFFTConvPdf::lxgL(xL, landauL, gaussL)");
-  w.factory(Form("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[%f])",tilespr));
-  //w.factory("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[0.633])");
+  //w.factory(Form("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[%f])",tilespr));
+  w.factory("RooGaussian::gaussBL(xL, m_gaussNoise[0.0], s_gaussNoise[0.318])");
   w.factory("SUM::modelL(nNoise_l * gaussBL, nSig_l* lxgL)");
   RooAbsPdf * modelL = w.pdf("modelL");
 
@@ -182,18 +224,30 @@ spread spr;
       auto filterTree = d.Filter(filterSel, {"MIP_layer", "MIP_iR"});
       //      auto mipH = d.Filter(filterSel, {"MIP_layer", "MIP_iR"}).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
 	//int numberOfE = entries;
-	int numberOfE = 8000;
+	int numberOfE = 6000;
 	auto mipH = filterTree.Range(0, numberOfE).Histo1D({"mipH", "", 120, 0.5, 10.5}, "MIP_val");
 
       float nEntries = mipH->GetEntries();
-      if(nEntries < numberOfE) continue;     
-      RooDataHist locData("locData","locData", xL, Import(*(mipH)) );
+      if(nEntries < numberOfE) {
+	continue;
+	}     
+	if(minbool) {
+        fprintf (outfulltable, "%d  ", ij_R);		
+        fprintf (outfulltable2, "%d  ", ij_R);		
+        fprintf (outfulltable3, "%d  ", ij_R);		
+	minbool=false;
+	}  
+    RooDataHist locData("locData","locData", xL, Import(*(mipH)) );
 
       //fit and save
       RooFitResult * rJL = modelL->fitTo(locData, Minimizer("Minuit2"),Save(true));
       auto fittedVal = w.var("m_landau_l")->getVal();
       MIP_values_layer_ring->Fill(fittedVal);
       auto fittedValError = w.var("m_landau_l")->getError();
+	//printf("thevals:%f,%f",fittedVal,fittedValError);
+        fprintf (outfulltable, "%f   ", fittedVal);		
+        fprintf (outfulltable2, "%f   ", fittedValError);		
+        fprintf (outfulltable3, "%f   ", fittedValError/fittedVal);		
       MIPerror_vs_nEntries_layer_ring->SetPoint(MIPerror_vs_nEntries_layer_ring->GetN(), nEntries, fittedValError*100.);
       tp_MIPerror_vs_nEntries_layer_ring->Fill(numberOfE, fittedValError*100.);
 
@@ -208,15 +262,22 @@ spread spr;
       frameL->getAttText()->SetTextFont(42);                                                                                                                   
 
       TCanvas* cL = new TCanvas();                                                                                                                             
+
       cL->cd();                                                                                                                                                
       frameL->Draw();                                                                                    
-     
-      cL->Print(Form("singleFits/Uncer_wNeutfit_%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
+     title->DrawTextNDC(0.2,0.96,"CMS");
+     extra->DrawTextNDC(0.3,0.96,"Work In Progress");
+     extra2->DrawTextNDC(0.51,0.96,"Phase2");
+     LRInfo->DrawTextNDC(0.58,0.96,Form("Layer=%d, Ring=%d, EOL",ij_L+firstLayer,ij_R));
+      cL->Print(Form("FixedEvt/Uncer_wNeutfit_%s_mip_L%d_R%d_nEvts%d.png", outtag.c_str(),ij_L+firstLayer, ij_R, numberOfE), ".png"); 
       
       delete cL;
       delete frameL;
       //delete mipH;
 	}
+        fprintf (outfulltable, "\n");		
+        fprintf (outfulltable2, "\n");		
+        fprintf (outfulltable3, "\n");		
   }
 
 
