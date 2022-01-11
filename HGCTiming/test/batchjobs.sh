@@ -1,5 +1,5 @@
 #!/bin/bash
-#python Setupmake.py
+python Setupmake.py
 doSubmit=true
 modes=( \ 
  "Rand40mu_eol"       \
